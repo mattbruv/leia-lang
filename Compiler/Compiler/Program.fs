@@ -3,5 +3,7 @@
 open Parser
 
 
-let x = parseA "ZBC"
+let inputABC = "ABC"
+let x = pchar ('A', inputABC)
+
 printfn $"{x}"

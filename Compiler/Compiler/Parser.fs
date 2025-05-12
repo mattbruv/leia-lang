@@ -2,11 +2,21 @@ module Parser
 
 open System
 
-let parseA str =
+
+type ParseResult<'a> =
+    | Success of 'a
+    | Failure of string
+
+let pchar (charToMatch, str) =
     if String.IsNullOrEmpty(str) then
-        (false, "")
-    else if str[0] = 'A' then
-        let remaining = str[1..]
-        (true, remaining)
+        Failure "No more input"
     else
-        (false, str)
+        let first = str[0]
+        if first = charToMatch then
+            let remaining = str[1..]
+            let msg = sprintf "Found %c" charToMatch
+            Success (charToMatch, remaining)
+        else
+            let msg = sprintf "Expecting '%c'. Got '%c'" charToMatch first
+            Failure msg
+        
