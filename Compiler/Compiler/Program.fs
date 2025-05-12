@@ -1,9 +1,7 @@
 ﻿module Program
 
 open Parser
-
-
 let inputABC = "ABC"
-let x = pchar ('A', inputABC)
-
+let parseA = pchar 'A'
+let x = run parseA inputABC
 printfn $"{x}"
