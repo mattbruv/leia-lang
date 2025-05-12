@@ -18,6 +18,11 @@ let aAndThenBorC = parseA .>>. (parseB <|> pchar 'C')
 
 let z = run aAndThenBorC inputABC
 
-printfn $"{x}"
-printfn $"{y}"
-printfn $"{z}"
+let print x = printfn $"%A{x}"
+
+print (run parseLowercase "aBC")
+print (run parseLowercase "ABC")
+print (run parseLowercase "abc")
+print (run parseDigit "1ABC")
+print (run parseDigit "9ABC")
+print (run parseDigit "|ABC")

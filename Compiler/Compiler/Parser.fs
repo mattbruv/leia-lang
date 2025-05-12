@@ -55,5 +55,16 @@ let orElse parser1 parser2 =
 
     Parser innerFn
 
+
 let (.>>.) = andThen
 let (<|>) = orElse
+
+let choice listOfParsers = List.reduce (<|>) listOfParsers
+
+let anyOf listOfChars =
+    listOfChars
+    |> List.map pchar // map into a parser
+    |> choice // combine them
+
+let parseLowercase = anyOf [ 'a' .. 'z' ]
+let parseDigit = anyOf [ '0' .. '9' ]
