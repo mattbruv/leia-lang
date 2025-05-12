@@ -27,3 +27,22 @@ let pchar charToMatch =
                 Failure msg
 
     Parser innerFn
+
+let andThen parser1 parser2 =
+    let innerFn input =
+        let result1 = run parser1 input
+
+        match result1 with
+        | Failure err -> Failure err
+        | Success(value1, remaining1) ->
+            let result2 = run parser2 remaining1
+
+            match result2 with
+            | Failure err -> Failure err
+            | Success(value2, remaining2) ->
+                let newValue = (value1, value2)
+                Success(newValue, remaining2)
+
+    Parser innerFn
+
+let (.>>.) = andThen
