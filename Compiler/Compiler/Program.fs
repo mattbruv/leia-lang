@@ -1,10 +1,7 @@
-﻿module Foo
+﻿module Program
 
-let foo = false
+open Parser
 
-let x =
-    match foo with
-    | true -> "im true"
-    | _ -> "todo"
 
-printfn $"%s{x}"
+let x = parseA "ZBC"
+printfn $"{x}"
