@@ -171,3 +171,23 @@ let (.>>) p1 p2 = p1 .>>. p2 |> mapP fst
 let (>>.) p1 p2 = p1 .>>. p2 |> mapP snd
 
 let between p1 p2 p3 = p1 >>. p2 .>> p3
+
+let sepBy1 p sep =
+    let sepThenP = sep >>. p
+    p .>>. many sepThenP |>> fun (p, pList) -> p :: pList
+
+let sepBy p sep = sepBy1 p sep <|> returnP []
+
+let bindP f p =
+    let innerFn input =
+        let result1 = run p input
+
+        match result1 with
+        | Failure err -> Failure err
+        | Success(value1, remainingInput) ->
+            let p2 = f value1
+            run p2 remainingInput
+
+    Parser innerFn
+
+let (>>=) p f = bindP f p

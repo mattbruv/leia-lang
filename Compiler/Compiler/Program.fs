@@ -23,3 +23,18 @@ let quotedInteger = between pdoublequote pint pdoublequote
 
 print (run quotedInteger "\"1234\"") // Success (1234, "")
 print (run quotedInteger "1234") // Failure "Expecting '"'. Got '1'"
+
+let comma = pchar ','
+
+let zeroOrMoreDigitList = sepBy digit comma
+let oneOrMoreDigitList = sepBy1 digit comma
+
+print (run oneOrMoreDigitList "1;") // Success (['1'], ";")
+print (run oneOrMoreDigitList "1,2;") // Success (['1'; '2'], ";")
+print (run oneOrMoreDigitList "1,2,3;") // Success (['1'; '2'; '3'], ";")
+print (run oneOrMoreDigitList "Z;") // Failure "Expecting '9'. Got 'Z'"
+
+print (run zeroOrMoreDigitList "1;") // Success (['1'], ";")
+print (run zeroOrMoreDigitList "1,2;") // Success (['1'; '2'], ";")
+print (run zeroOrMoreDigitList "1,2,3;") // Success (['1'; '2'; '3'], ";")
+print (run zeroOrMoreDigitList "Z;") // Success ([], "Z;")
