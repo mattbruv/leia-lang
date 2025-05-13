@@ -23,6 +23,21 @@ let printResult result =
 
 let run (parser: Parser<_>) input = parser.parseFn input
 
+let setLabel parser newLabel =
+    let newInnerFn input =
+        let result = parser.parseFn input
+
+        match result with
+        | Success s -> Success s
+        | Failure(_, err) -> Failure(newLabel, err)
+
+    { parseFn = newInnerFn
+      label = newLabel }
+
+let (<?>) = setLabel
+
+let getLabel parser = parser.label
+
 let pchar charToMatch =
     let innerFn str =
         if String.IsNullOrEmpty(str) then
@@ -61,9 +76,14 @@ let returnP x =
 
 
 let andThen p1 p2 =
+    let label = $"%s{getLabel p1} andThen %s{getLabel p2}"
+
     p1 >>= (fun p1Result -> p2 >>= (fun p2Result -> returnP (p1Result, p2Result)))
+    <?> label
 
 let orElse parser1 parser2 =
+    let label = $"%s{getLabel parser1} orElse %s{getLabel parser2}"
+
     let innerFn input =
         let result1 = run parser1 input
 
@@ -71,19 +91,7 @@ let orElse parser1 parser2 =
         | Success _ -> result1
         | Failure _ -> run parser2 input
 
-    { parseFn = innerFn; label = "orElse" }
-
-// let mapP f parser =
-//     let innerFn input =
-//         let result = run parser input
-//
-//         match result with
-//         | Success(value, remaining) ->
-//             let newValue = f value
-//             Success(newValue, remaining)
-//         | Failure err -> Failure err
-//
-//     Parser innerFn
+    { parseFn = innerFn; label = label }
 
 let mapP f = bindP (f >> returnP)
 
@@ -99,9 +107,12 @@ let (|>>) x f = mapP f x
 let choice listOfParsers = List.reduce (<|>) listOfParsers
 
 let anyOf listOfChars =
+    let label = $"any of %A{listOfChars}"
+
     listOfChars
     |> List.map pchar // map into a parser
     |> choice // combine them
+    <?> label
 
 let parseLowercase = anyOf [ 'a' .. 'z' ]
 let parseDigit = anyOf [ '0' .. '9' ]
@@ -181,18 +192,3 @@ let sepBy1 p sep =
     p .>>. many sepThenP |>> fun (p, pList) -> p :: pList
 
 let sepBy p sep = sepBy1 p sep <|> returnP []
-
-let setLabel parser newLabel =
-    let newInnerFn input =
-        let result = parser.parseFn input
-
-        match result with
-        | Success s -> Success s
-        | Failure(_, err) -> Failure(newLabel, err)
-
-    { parseFn = newInnerFn
-      label = newLabel }
-
-let (<?>) = setLabel
-
-let getLabel parser = parser.label
