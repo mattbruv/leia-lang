@@ -2,20 +2,31 @@ module Parser
 
 open System
 
+type ParserLabel = string
+type ParserError = string
+
 type ParseResult<'a> =
     | Success of 'a
-    | Failure of string
+    | Failure of ParserLabel * ParserError
 
-type Parser<'T> = Parser of (string -> ParseResult<'T * string>)
 
-let run parser input =
-    let (Parser innerFn) = parser
-    innerFn input
+type Parser<'a> =
+    { parseFn: (string -> ParseResult<'a * string>)
+      label: ParserLabel }
+
+let printResult result =
+    match result with
+    | Success(value, _input) -> printfn $"%A{value}"
+    | Failure(label, error) -> printfn $"Error parsing %s{label}\n%s{error}"
+
+// type Parser<'T> = Parser of (string -> ParseResult<'T * string>)
+
+let run (parser: Parser<_>) input = parser.parseFn input
 
 let pchar charToMatch =
     let innerFn str =
         if String.IsNullOrEmpty(str) then
-            Failure "No more input"
+            Failure("char", "No more input")
         else
             let first = str[0]
 
@@ -23,28 +34,30 @@ let pchar charToMatch =
                 let remaining = str[1..]
                 Success(charToMatch, remaining)
             else
-                let msg = $"Expecting '%c{charToMatch}'. Got '%c{first}'"
-                Failure msg
+                let msg = $"Unexpected '%c{first}'"
+                Failure("char", msg)
 
-    Parser innerFn
+    { parseFn = innerFn; label = "char" }
 
 let bindP f p =
+    let label = "unknown"
+
     let innerFn input =
         let result1 = run p input
 
         match result1 with
-        | Failure err -> Failure err
+        | Failure(label, err) -> Failure(label, err)
         | Success(value1, remainingInput) ->
             let p2 = f value1
             run p2 remainingInput
 
-    Parser innerFn
+    { parseFn = innerFn; label = label }
 
 let (>>=) p f = bindP f p
 
 let returnP x =
     let innerFn input = Success(x, input)
-    Parser innerFn
+    { parseFn = innerFn; label = "returnP" }
 
 
 let andThen p1 p2 =
@@ -58,7 +71,7 @@ let orElse parser1 parser2 =
         | Success _ -> result1
         | Failure _ -> run parser2 input
 
-    Parser innerFn
+    { parseFn = innerFn; label = "orElse" }
 
 // let mapP f parser =
 //     let innerFn input =
@@ -131,7 +144,7 @@ let rec parseZeroOrMore parser input =
 
 let many parser =
     let innerFn input = Success(parseZeroOrMore parser input)
-    Parser innerFn
+    { parseFn = innerFn; label = "many" }
 
 let whitespaceChar = anyOf [ ' '; '\t'; '\n' ]
 let whitespace = many whitespaceChar
@@ -168,3 +181,18 @@ let sepBy1 p sep =
     p .>>. many sepThenP |>> fun (p, pList) -> p :: pList
 
 let sepBy p sep = sepBy1 p sep <|> returnP []
+
+let setLabel parser newLabel =
+    let newInnerFn input =
+        let result = parser.parseFn input
+
+        match result with
+        | Success s -> Success s
+        | Failure(_, err) -> Failure(newLabel, err)
+
+    { parseFn = newInnerFn
+      label = newLabel }
+
+let (<?>) = setLabel
+
+let getLabel parser = parser.label
