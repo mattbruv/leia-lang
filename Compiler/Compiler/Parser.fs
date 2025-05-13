@@ -55,9 +55,26 @@ let orElse parser1 parser2 =
 
     Parser innerFn
 
+let mapP f parser =
+    let innerFn input =
+        let result = run parser input
+
+        match result with
+        | Success(value, remaining) ->
+            let newValue = f value
+            Success(newValue, remaining)
+        | Failure err -> Failure err
+
+    Parser innerFn
 
 let (.>>.) = andThen
 let (<|>) = orElse
+let (<!>) = mapP
+
+// in the context of parsing, we’ll often want to put the mapping function after the parser,
+// with the parameters flipped.
+// This makes using map with the pipeline idiom much more convenient
+let (|>>) x f = mapP f x
 
 let choice listOfParsers = List.reduce (<|>) listOfParsers
 

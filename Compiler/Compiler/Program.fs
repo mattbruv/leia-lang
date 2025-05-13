@@ -20,9 +20,19 @@ let z = run aAndThenBorC inputABC
 
 let print x = printfn $"%A{x}"
 
+
 print (run parseLowercase "aBC")
 print (run parseLowercase "ABC")
 print (run parseLowercase "abc")
 print (run parseDigit "1ABC")
 print (run parseDigit "9ABC")
 print (run parseDigit "|ABC")
+
+let parseThreeDigitsAsStr =
+    let tupleParser = parseDigit .>>. parseDigit .>>. parseDigit
+    let transformTuple ((c1, c2), c3) = System.String [| c1; c2; c3 |]
+    mapP transformTuple tupleParser
+
+let parseThreeDigitsAsInt = parseThreeDigitsAsStr |>> int
+
+print (run parseThreeDigitsAsInt "123A")
