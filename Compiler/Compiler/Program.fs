@@ -36,3 +36,12 @@ let parseThreeDigitsAsStr =
 let parseThreeDigitsAsInt = parseThreeDigitsAsStr |>> int
 
 print (run parseThreeDigitsAsInt "123A")
+
+let parsers = [ pchar 'A'; pchar 'B'; pchar 'C' ]
+let combined = sequence parsers
+print (run combined "ABCD")
+
+let parseABC = pstring "ABC"
+print (run parseABC "ABCDE")
+print (run parseABC "A|CDE")
+print (run parseABC "AB|DE")
