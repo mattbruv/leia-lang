@@ -28,22 +28,27 @@ let pchar charToMatch =
 
     Parser innerFn
 
-let andThen parser1 parser2 =
+let bindP f p =
     let innerFn input =
-        let result1 = run parser1 input
+        let result1 = run p input
 
         match result1 with
         | Failure err -> Failure err
-        | Success(value1, remaining1) ->
-            let result2 = run parser2 remaining1
-
-            match result2 with
-            | Failure err -> Failure err
-            | Success(value2, remaining2) ->
-                let newValue = (value1, value2)
-                Success(newValue, remaining2)
+        | Success(value1, remainingInput) ->
+            let p2 = f value1
+            run p2 remainingInput
 
     Parser innerFn
+
+let (>>=) p f = bindP f p
+
+let returnP x =
+    let innerFn input = Success(x, input)
+    Parser innerFn
+
+
+let andThen p1 p2 =
+    p1 >>= (fun p1Result -> p2 >>= (fun p2Result -> returnP (p1Result, p2Result)))
 
 let orElse parser1 parser2 =
     let innerFn input =
@@ -55,19 +60,19 @@ let orElse parser1 parser2 =
 
     Parser innerFn
 
-let mapP f parser =
-    let innerFn input =
-        let result = run parser input
+// let mapP f parser =
+//     let innerFn input =
+//         let result = run parser input
+//
+//         match result with
+//         | Success(value, remaining) ->
+//             let newValue = f value
+//             Success(newValue, remaining)
+//         | Failure err -> Failure err
+//
+//     Parser innerFn
 
-        match result with
-        | Success(value, remaining) ->
-            let newValue = f value
-            Success(newValue, remaining)
-        | Failure err -> Failure err
-
-    Parser innerFn
-
-
+let mapP f = bindP (f >> returnP)
 
 let (.>>.) = andThen
 let (<|>) = orElse
@@ -88,12 +93,8 @@ let anyOf listOfChars =
 let parseLowercase = anyOf [ 'a' .. 'z' ]
 let parseDigit = anyOf [ '0' .. '9' ]
 
-let returnP x =
-    let innerFn input = Success(x, input)
-    Parser innerFn
-
 let applyP fP xP =
-    (fP .>>. xP) |> mapP (fun (f, x) -> f x)
+    fP >>= (fun f -> xP >>= (fun x -> returnP (f x)))
 
 let (<*>) = applyP
 
@@ -137,17 +138,7 @@ let whitespace = many whitespaceChar
 
 
 let many1 parser =
-    let innerFn input =
-        let firstResult = run parser input
-
-        match firstResult with
-        | Failure err -> Failure err
-        | Success(firstValue, inputAfterFirstParse) ->
-            let (subsequentValues, remainingInput) = parseZeroOrMore parser inputAfterFirstParse
-            let values = firstValue :: subsequentValues
-            Success(values, remainingInput)
-
-    Parser innerFn
+    parser >>= (fun head -> many parser >>= (fun tail -> returnP (head :: tail)))
 
 let opt p =
     let some = p |>> Some
@@ -177,17 +168,3 @@ let sepBy1 p sep =
     p .>>. many sepThenP |>> fun (p, pList) -> p :: pList
 
 let sepBy p sep = sepBy1 p sep <|> returnP []
-
-let bindP f p =
-    let innerFn input =
-        let result1 = run p input
-
-        match result1 with
-        | Failure err -> Failure err
-        | Success(value1, remainingInput) ->
-            let p2 = f value1
-            run p2 remainingInput
-
-    Parser innerFn
-
-let (>>=) p f = bindP f p
