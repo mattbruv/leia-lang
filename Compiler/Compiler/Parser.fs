@@ -134,3 +134,35 @@ let many parser =
 
 let whitespaceChar = anyOf [ ' '; '\t'; '\n' ]
 let whitespace = many whitespaceChar
+
+
+let many1 parser =
+    let innerFn input =
+        let firstResult = run parser input
+
+        match firstResult with
+        | Failure err -> Failure err
+        | Success(firstValue, inputAfterFirstParse) ->
+            let (subsequentValues, remainingInput) = parseZeroOrMore parser inputAfterFirstParse
+            let values = firstValue :: subsequentValues
+            Success(values, remainingInput)
+
+    Parser innerFn
+
+let opt p =
+    let some = p |>> Some
+    let none = returnP None
+    some <|> none
+
+let pint =
+    let resultToInt (sign, charList) =
+        let i = charList |> List.toArray |> String |> int
+
+        match sign with
+        | Some ch -> -i
+        | None -> i
+
+    let digit = anyOf [ '0' .. '9' ]
+    let digits = many1 digit
+
+    opt (pchar '-') .>>. digits |>> resultToInt
