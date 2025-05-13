@@ -166,3 +166,8 @@ let pint =
     let digits = many1 digit
 
     opt (pchar '-') .>>. digits |>> resultToInt
+
+let (.>>) p1 p2 = p1 .>>. p2 |> mapP fst
+let (>>.) p1 p2 = p1 .>>. p2 |> mapP snd
+
+let between p1 p2 p3 = p1 >>. p2 .>> p3
