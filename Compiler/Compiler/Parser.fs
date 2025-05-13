@@ -117,3 +117,20 @@ let charListToStr charList = charList |> List.toArray |> String
 
 let pstring str =
     str |> List.ofSeq |> List.map pchar |> sequence |> mapP charListToStr
+
+let rec parseZeroOrMore parser input =
+    let firstResult = run parser input
+
+    match firstResult with
+    | Failure _ -> ([], input)
+    | Success(firstValue, inputAfterFirstParse) ->
+        let (subsequentValues, remainingInput) = parseZeroOrMore parser inputAfterFirstParse
+        let values = firstValue :: subsequentValues
+        (values, remainingInput)
+
+let many parser =
+    let innerFn input = Success(parseZeroOrMore parser input)
+    Parser innerFn
+
+let whitespaceChar = anyOf [ ' '; '\t'; '\n' ]
+let whitespace = many whitespaceChar

@@ -45,3 +45,10 @@ let parseABC = pstring "ABC"
 print (run parseABC "ABCDE")
 print (run parseABC "A|CDE")
 print (run parseABC "AB|DE")
+
+let manyAb = many (pstring "AB")
+
+print (run manyAb "AZABABA")
+print (run whitespace "ABC")
+print (run whitespace " ABC")
+print (run whitespace "\t\nABC\n")
