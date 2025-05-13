@@ -38,21 +38,27 @@ let (<?>) = setLabel
 
 let getLabel parser = parser.label
 
-let pchar charToMatch =
-    let innerFn str =
-        if String.IsNullOrEmpty(str) then
-            Failure("char", "No more input")
+
+let satisfy predicate label =
+    let innerFn input =
+        if String.IsNullOrEmpty(input) then
+            Failure(label, "No more input")
         else
-            let first = str[0]
+            let first = input[0]
 
-            if first = charToMatch then
-                let remaining = str[1..]
-                Success(charToMatch, remaining)
+            if predicate first then
+                let remaining = input[1..]
+                Success(first, remaining)
             else
-                let msg = $"Unexpected '%c{first}'"
-                Failure("char", msg)
+                let err = $"Unexpected '%c{first}'"
+                Failure(label, err)
 
-    { parseFn = innerFn; label = "char" }
+    { parseFn = innerFn; label = label }
+
+let pchar charToMatch =
+    let predicate ch = (ch = charToMatch)
+    let label = $"%c{charToMatch}"
+    satisfy predicate label
 
 let bindP f p =
     let label = "unknown"
@@ -115,7 +121,11 @@ let anyOf listOfChars =
     <?> label
 
 let parseLowercase = anyOf [ 'a' .. 'z' ]
-let parseDigit = anyOf [ '0' .. '9' ]
+
+let digitChar =
+    let predicate = Char.IsDigit
+    let label = "digit"
+    satisfy predicate label
 
 let applyP fP xP =
     fP >>= (fun f -> xP >>= (fun x -> returnP (f x)))
@@ -157,7 +167,11 @@ let many parser =
     let innerFn input = Success(parseZeroOrMore parser input)
     { parseFn = innerFn; label = "many" }
 
-let whitespaceChar = anyOf [ ' '; '\t'; '\n' ]
+let whitespaceChar =
+    let predicate = Char.IsWhiteSpace
+    let label = "whitespace"
+    satisfy predicate label
+
 let whitespace = many whitespaceChar
 
 
