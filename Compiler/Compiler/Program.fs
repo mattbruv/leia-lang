@@ -5,6 +5,6 @@ open Parser
 let print x = printfn $"%A{x}"
 
 
-let parseDigit_WithLabel = anyOf [ '0' .. '9' ] <?> "digit"
+let x = fromStr "a\nb" |> readAllChars
 
-run parseDigit_WithLabel "|ABC" |> printResult
+print x
