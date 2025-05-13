@@ -67,6 +67,8 @@ let mapP f parser =
 
     Parser innerFn
 
+
+
 let (.>>.) = andThen
 let (<|>) = orElse
 let (<!>) = mapP
@@ -85,3 +87,20 @@ let anyOf listOfChars =
 
 let parseLowercase = anyOf [ 'a' .. 'z' ]
 let parseDigit = anyOf [ '0' .. '9' ]
+
+let returnP x =
+    let innerFn input = Success(x, input)
+    Parser innerFn
+
+let applyP fP xP =
+    (fP .>>. xP) |> mapP (fun (f, x) -> f x)
+
+let (<*>) = applyP
+
+let lift2 f xP yP = returnP f <*> xP <*> yP
+
+let addP = lift2 (+)
+
+let startsWith (str: string) (prefix: string) = str.StartsWith(prefix)
+
+let startsWithP = lift2 startsWith
