@@ -130,8 +130,8 @@ let satisfy predicate label =
     { parseFn = innerFn; label = label }
 
 let pchar charToMatch =
-    let predicate ch = (ch = charToMatch)
     let label = $"%c{charToMatch}"
+    let predicate ch = (ch = charToMatch)
     satisfy predicate label
 
 let bindP f p =
@@ -179,9 +179,10 @@ let (.>>.) = andThen
 let (<|>) = orElse
 let (<!>) = mapP
 
-// in the context of parsing, we’ll often want to put the mapping function after the parser,
-// with the parameters flipped.
-// This makes using map with the pipeline idiom much more convenient
+/// Alias for mapP
+/// in the context of parsing, we’ll often want to put the mapping function after the parser,
+/// with the parameters flipped.
+/// This makes using map with the pipeline idiom much more convenient
 let (|>>) x f = mapP f x
 
 let choice listOfParsers = List.reduce (<|>) listOfParsers
@@ -225,7 +226,8 @@ let rec sequence parserList =
 let charListToStr charList = charList |> List.toArray |> String
 
 let pstring str =
-    str |> List.ofSeq |> List.map pchar |> sequence |> mapP charListToStr
+    let label = str
+    str |> List.ofSeq |> List.map pchar |> sequence |> mapP charListToStr <?> label
 
 let rec parseZeroOrMore parser input =
     let firstResult = runOnInput parser input
@@ -233,13 +235,20 @@ let rec parseZeroOrMore parser input =
     match firstResult with
     | Failure _ -> ([], input)
     | Success(firstValue, inputAfterFirstParse) ->
-        let (subsequentValues, remainingInput) = parseZeroOrMore parser inputAfterFirstParse
+        let subsequentValues, remainingInput = parseZeroOrMore parser inputAfterFirstParse
         let values = firstValue :: subsequentValues
         (values, remainingInput)
 
 let many parser =
     let innerFn input = Success(parseZeroOrMore parser input)
     { parseFn = innerFn; label = "many" }
+
+let many1 parser =
+    parser >>= (fun head -> many parser >>= (fun tail -> returnP (head :: tail)))
+
+let manyChars cp = many cp |>> charListToStr
+
+let manyChars1 cp = many1 cp |>> charListToStr
 
 let whitespaceChar =
     let predicate = Char.IsWhiteSpace
@@ -248,9 +257,8 @@ let whitespaceChar =
 
 let whitespace = many whitespaceChar
 
+let whitespace1 = many1 whitespaceChar
 
-let many1 parser =
-    parser >>= (fun head -> many parser >>= (fun tail -> returnP (head :: tail)))
 
 let opt p =
     let some = p |>> Some
@@ -258,17 +266,35 @@ let opt p =
     some <|> none
 
 let pint =
-    let resultToInt (sign, charList) =
-        let i = charList |> List.toArray |> String |> int
+    let label = "integer"
+
+    let resultToInt (sign, digits) =
+        let i = digits |> int
 
         match sign with
-        | Some ch -> -i
+        | Some ch -> -i // negate the int
         | None -> i
 
-    let digit = anyOf [ '0' .. '9' ]
-    let digits = many1 digit
+    let digits = manyChars1 digitChar
 
-    opt (pchar '-') .>>. digits |>> resultToInt
+    opt (pchar '-') .>>. digits |>> resultToInt <?> label
+
+let pfloat =
+    let label = "float"
+
+    // helper
+    let resultToFloat (((sign, digits1), point), digits2) =
+        let fl = sprintf "%s.%s" digits1 digits2 |> float
+
+        match sign with
+        | Some ch -> -fl
+        | None -> fl
+
+    let digits = manyChars1 digitChar
+
+    // A float is a sign, digits, point, digits, (ignore exponents for now)
+    opt (pchar '-') .>>. digits .>>. pchar '.' .>>. digits |>> resultToFloat
+    <?> label
 
 let (.>>) p1 p2 = p1 .>>. p2 |> mapP fst
 let (>>.) p1 p2 = p1 .>>. p2 |> mapP snd
