@@ -4,7 +4,5 @@ open Parser
 
 let print x = printfn $"%A{x}"
 
-
-let x = fromStr "a\nb" |> readAllChars
-
-print x
+let parseAB = pchar 'A' .>>. pchar 'B' <?> "AB"
+run parseAB "A|C" |> printResult

@@ -12,14 +12,6 @@ let incrLine pos = { line = pos.line + 1; column = 0 }
 
 type InputState = { lines: string[]; position: Position }
 
-let fromStr str =
-    if String.IsNullOrEmpty(str) then
-        { lines = [||]; position = initialPos }
-    else
-        let separators = [| "\r\n"; "\n" |]
-        let lines = str.Split(separators, StringSplitOptions.None)
-        { lines = lines; position = initialPos }
-
 let currentLine inputState =
     let linePos = inputState.position.line
 
@@ -27,6 +19,24 @@ let currentLine inputState =
         inputState.lines[linePos]
     else
         "end of file"
+
+type ParserPosition =
+    { currentLine: string
+      line: int
+      column: int }
+
+let parserPositionFromInputState (inputState: InputState) =
+    { currentLine = currentLine inputState
+      line = inputState.position.line
+      column = inputState.position.column }
+
+let fromStr str =
+    if String.IsNullOrEmpty(str) then
+        { lines = [||]; position = initialPos }
+    else
+        let separators = [| "\r\n"; "\n" |]
+        let lines = str.Split(separators, StringSplitOptions.None)
+        { lines = lines; position = initialPos }
 
 let nextChar input =
     let linePos = input.position.line
@@ -64,21 +74,25 @@ let rec readAllChars input =
 
 type ParseResult<'a> =
     | Success of 'a
-    | Failure of ParserLabel * ParserError
-
+    | Failure of ParserLabel * ParserError * ParserPosition
 
 type Parser<'a> =
-    { parseFn: (string -> ParseResult<'a * string>)
+    { parseFn: InputState -> ParseResult<'a * InputState>
       label: ParserLabel }
 
 let printResult result =
     match result with
     | Success(value, _input) -> printfn $"%A{value}"
-    | Failure(label, error) -> printfn $"Error parsing %s{label}\n%s{error}"
+    | Failure(label, error, parserPos) ->
+        let errorLine = parserPos.currentLine
+        let colPos = parserPos.column
+        let linePos = parserPos.line
+        let failureCaret = sprintf "%*s^%s" colPos "" error
+        printfn $"Line: %i{linePos} Col: %i{colPos} Error parsing %s{label}\n%s{errorLine}\n%s{failureCaret}"
 
-// type Parser<'T> = Parser of (string -> ParseResult<'T * string>)
+let runOnInput parser input = parser.parseFn input
 
-let run (parser: Parser<_>) input = parser.parseFn input
+let run parser inputStr = runOnInput parser (fromStr inputStr)
 
 let setLabel parser newLabel =
     let newInnerFn input =
@@ -86,7 +100,7 @@ let setLabel parser newLabel =
 
         match result with
         | Success s -> Success s
-        | Failure(_, err) -> Failure(newLabel, err)
+        | Failure(_, err, pos) -> Failure(newLabel, err, pos)
 
     { parseFn = newInnerFn
       label = newLabel }
@@ -98,17 +112,20 @@ let getLabel parser = parser.label
 
 let satisfy predicate label =
     let innerFn input =
-        if String.IsNullOrEmpty(input) then
-            Failure(label, "No more input")
-        else
-            let first = input[0]
+        let remainingInput, charOpt = nextChar input
 
+        match charOpt with
+        | None ->
+            let err = "No more input"
+            let pos = parserPositionFromInputState input
+            Failure(label, err, pos)
+        | Some first ->
             if predicate first then
-                let remaining = input[1..]
-                Success(first, remaining)
+                Success(first, remainingInput)
             else
                 let err = $"Unexpected '%c{first}'"
-                Failure(label, err)
+                let pos = parserPositionFromInputState input
+                Failure(label, err, pos)
 
     { parseFn = innerFn; label = label }
 
@@ -121,13 +138,13 @@ let bindP f p =
     let label = "unknown"
 
     let innerFn input =
-        let result1 = run p input
+        let result1 = runOnInput p input
 
         match result1 with
-        | Failure(label, err) -> Failure(label, err)
+        | Failure(label, err, pos) -> Failure(label, err, pos)
         | Success(value1, remainingInput) ->
             let p2 = f value1
-            run p2 remainingInput
+            runOnInput p2 remainingInput
 
     { parseFn = innerFn; label = label }
 
@@ -148,11 +165,11 @@ let orElse parser1 parser2 =
     let label = $"%s{getLabel parser1} orElse %s{getLabel parser2}"
 
     let innerFn input =
-        let result1 = run parser1 input
+        let result1 = runOnInput parser1 input
 
         match result1 with
         | Success _ -> result1
-        | Failure _ -> run parser2 input
+        | Failure _ -> runOnInput parser2 input
 
     { parseFn = innerFn; label = label }
 
@@ -211,7 +228,7 @@ let pstring str =
     str |> List.ofSeq |> List.map pchar |> sequence |> mapP charListToStr
 
 let rec parseZeroOrMore parser input =
-    let firstResult = run parser input
+    let firstResult = runOnInput parser input
 
     match firstResult with
     | Failure _ -> ([], input)
