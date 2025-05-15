@@ -1,6 +1,7 @@
 module Parser
 
 open System
+open Grammar
 
 type ParserLabel = string
 type ParserError = string
@@ -272,8 +273,8 @@ let pint =
         let i = digits |> int
 
         match sign with
-        | Some ch -> -i // negate the int
-        | None -> i
+        | Some _ -> Int -i // negate the int
+        | None -> Int i
 
     let digits = manyChars1 digitChar
 
@@ -283,12 +284,12 @@ let pfloat =
     let label = "float"
 
     // helper
-    let resultToFloat (((sign, digits1), point), digits2) =
-        let fl = sprintf "%s.%s" digits1 digits2 |> float
+    let resultToFloat (((sign, digits1), _point), digits2) =
+        let fl = $"%s{digits1}.%s{digits2}" |> float
 
         match sign with
-        | Some ch -> -fl
-        | None -> fl
+        | Some _ -> Float -fl
+        | None -> Float fl
 
     let digits = manyChars1 digitChar
 
@@ -306,3 +307,30 @@ let sepBy1 p sep =
     p .>>. many sepThenP |>> fun (p, pList) -> p :: pList
 
 let sepBy p sep = sepBy1 p sep <|> returnP []
+
+let eof =
+    let label = "end of input"
+
+    let innerFn input =
+        match nextChar input with
+        | _, None -> Success((), input) // no more chars = success
+        | _, Some c ->
+            let pos = parserPositionFromInputState input
+            Failure(label, $"Expected end of input but found '{c}'", pos)
+
+    { parseFn = innerFn; label = label }
+
+// Leia grammar parsers
+
+let pbool =
+    choice
+        [ pstring "true" |>> (fun _ -> Boolean true)
+          pstring "false" |>> (fun _ -> Boolean false) ]
+    <?> "boolean"
+
+let pliteral = //pbool <|> pint <|> pfloat <?> "literal"
+    choice [ pfloat; pint; pbool ]
+
+
+let pexpression = //
+    pliteral // literal value (int, float, string, boolean)
