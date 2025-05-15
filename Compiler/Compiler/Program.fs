@@ -8,6 +8,6 @@ let program =
     .>> eof
 
 
-run program "10.0\nfalse true 1 2 3 1234"
+run program "10.0 false true 1 2 3 1234"
 //
 |> printResult

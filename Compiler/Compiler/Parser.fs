@@ -328,9 +328,6 @@ let pbool =
           pstring "false" |>> (fun _ -> Boolean false) ]
     <?> "boolean"
 
-let pliteral = //pbool <|> pint <|> pfloat <?> "literal"
-    choice [ pfloat; pint; pbool ]
+let pliteral = choice [ pfloat; pint; pbool ]
 
-
-let pexpression = //
-    pliteral // literal value (int, float, string, boolean)
+let pexpression = choice [ pliteral ]
