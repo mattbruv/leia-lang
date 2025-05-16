@@ -1,5 +1,6 @@
 ﻿module Program
 
+open System.IO
 open Parser
 
 let program =
@@ -7,7 +8,6 @@ let program =
     .>> many whitespaceChar
     .>> eof
 
+let contents = File.ReadAllText("examples/syntax.leia")
 
-run program "10.0 \"hi \\\"mom\" m____bar false true 1 2 3 1234 foobarbaz function print"
-//
-|> printResult
+run program contents |> printResult
