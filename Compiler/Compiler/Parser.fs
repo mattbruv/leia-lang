@@ -342,7 +342,16 @@ let pidentifier =
         Identifier str)
     <?> "identifier"
 
+let pstringLiteral =
+    let escapedQuote = pstring "\\\"" |>> (fun _ -> '"') // optional, if you want to support escaped quotes
+    let normalChar = satisfy (fun c -> c <> '"') "non-quote char"
 
-let pliteral = choice [ pfloat; pint; pbool; pidentifier ]
+    let stringChars = many (escapedQuote <|> normalChar)
+
+    between (pchar '"') stringChars (pchar '"') |>> String.Concat |>> LString
+    <?> "string literal"
+
+
+let pliteral = choice [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
 
 let pexpression = choice [ pliteral ]
