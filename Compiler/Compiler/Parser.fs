@@ -331,7 +331,7 @@ let pbool =
 
 let pidentifier =
     let isAlpha c = Char.IsLetter c
-    let isAlphaNum c = Char.IsLetterOrDigit c
+    let isAlphaNum c = Char.IsLetterOrDigit c || c = '_'
     let first = satisfy isAlpha "identifier (start letter)"
     let rest = many (satisfy isAlphaNum "identifier part")
 
