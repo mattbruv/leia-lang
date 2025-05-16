@@ -197,6 +197,7 @@ let anyOf listOfChars =
     <?> label
 
 let parseLowercase = anyOf [ 'a' .. 'z' ]
+let parseUppercase = anyOf [ 'A' .. 'Z' ]
 
 let digitChar =
     let predicate = Char.IsDigit
@@ -328,6 +329,20 @@ let pbool =
           pstring "false" |>> (fun _ -> Boolean false) ]
     <?> "boolean"
 
-let pliteral = choice [ pfloat; pint; pbool ]
+let pidentifier =
+    let isAlpha c = Char.IsLetter c
+    let isAlphaNum c = Char.IsLetterOrDigit c
+    let first = satisfy isAlpha "identifier (start letter)"
+    let rest = many (satisfy isAlphaNum "identifier part")
+
+    (first .>>. rest)
+    |>> (fun (head, tail) ->
+        let chars = head :: tail
+        let str = String.Concat chars
+        Identifier str)
+    <?> "identifier"
+
+
+let pliteral = choice [ pfloat; pint; pbool; pidentifier ]
 
 let pexpression = choice [ pliteral ]

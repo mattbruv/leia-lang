@@ -5,6 +5,7 @@ type Literal =
     | Float of float
     | LString of string
     | Boolean of bool
+    | Identifier of string
 
 type Expression =
     //
