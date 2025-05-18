@@ -1,3 +1,6 @@
+use vm::assembler::parse_assembly;
+
 fn main() {
-    println!("Hello, world!");
+    let asm = include_str!("../../asm/add.s");
+    println!("{:?}", parse_assembly(asm));
 }
