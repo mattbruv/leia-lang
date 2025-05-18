@@ -5,11 +5,12 @@ pub struct Program {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ConstantIndex(u16);
+pub struct ConstantIndex(pub u32);
 
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
     Push(ConstantIndex),
+    Jump(usize),
     Add,
     Print,
     Halt,
