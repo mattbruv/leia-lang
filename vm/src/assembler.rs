@@ -12,6 +12,7 @@ pub fn parse_assembly(asm: &str) -> Program {
 }
 
 /// Represents an unresolved jump before label resolution
+#[derive(Debug)]
 enum UnresolvedOpcode {
     Resolved(Opcode),
     JpLabel(String),
@@ -22,16 +23,21 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
     let mut opcodes = Vec::new();
     let mut labels = HashMap::new();
     let mut unresolved = Vec::new();
+    let mut instruction_index = 0;
 
-    // First pass: parse opcodes and collect labels
     for line in asm.lines().map(str::trim).filter(|l| !l.is_empty()) {
+        if line.starts_with(".const") {
+            continue; // Skip constants here
+        }
+
         if line.ends_with(':') {
-            continue; // skip labels like `main:`
+            continue; // Skip labels like `main:`
         }
 
         if line.starts_with('.') {
+            // Record the label as the *current* instruction index
             let label = line.trim_start_matches('.').to_string();
-            labels.insert(label, opcodes.len());
+            labels.insert(label, instruction_index);
             continue;
         }
 
@@ -46,7 +52,8 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
         match instr {
             "PUSH" => {
                 let index_str = parts.next().expect("PUSH needs an argument");
-                let index: ConstantIndex = ConstantIndex(index_str.parse::<u32>().unwrap());
+                let index: ConstantIndex =
+                    ConstantIndex(index_str.parse::<u32>().expect("Invalid constant index"));
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Push(index)));
             }
             "ADD" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Add)),
@@ -58,9 +65,13 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
             }
             _ => panic!("Unknown instruction: {}", instr),
         }
+
+        instruction_index += 1; // Count only real instructions
     }
 
-    // Second pass: resolve labels
+    //println!("{:?}", labels);
+
+    // Second pass: resolve JP labels
     for entry in unresolved {
         match entry {
             UnresolvedOpcode::Resolved(op) => opcodes.push(op),
