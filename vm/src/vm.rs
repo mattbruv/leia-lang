@@ -30,6 +30,8 @@ impl VM {
 
             match code {
                 Opcode::Push(constant_index) => {
+                    //println!("{:?}", self.program.constants);
+                    //println!("push const: {:?}", constant_index);
                     let constant = &self.program.constants[constant_index.0 as usize];
                     self.stack.push(match constant {
                         ConstantValue::Int(x) => LeiaValue::Int(*x),
@@ -114,8 +116,16 @@ impl VM {
                         panic!("Local variable index out of bounds: {}", idx);
                     }
                 }
-                Opcode::Equals => todo!(),
-                Opcode::GreaterThan => todo!(),
+                Opcode::Equals => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.eq(b));
+                }
+                Opcode::GreaterThan => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.gt(b));
+                }
             }
 
             self.pc += 1;

@@ -75,6 +75,22 @@ macro_rules! impl_arith_op {
     };
 }
 
+macro_rules! impl_cmp_op {
+    ($name:ident, $symbol:tt, $err:expr) => {
+        pub fn $name(self, other: LeiaValue) -> LeiaValue {
+            match (self, other) {
+                (LeiaValue::Int(a), LeiaValue::Int(b)) => {
+                    LeiaValue::Int((a $symbol b) as i32)
+                }
+                (LeiaValue::Float(a), LeiaValue::Float(b)) => {
+                    LeiaValue::Int((a $symbol b) as i32)
+                }
+                _ => panic!($err),
+            }
+        }
+    };
+}
+
 impl LeiaValue {
     impl_arith_op!(add, +, "Invalid types for addition");
     impl_arith_op!(sub, -, "Invalid types for subtraction");
@@ -89,4 +105,9 @@ impl LeiaValue {
             _ => panic!("Invalid types for string addition"),
         }
     }
+
+    impl_cmp_op!(gt, >, "Invalid types for greater-than comparison");
+    impl_cmp_op!(lt, <, "Invalid types for less-than comparison");
+    impl_cmp_op!(eq, ==, "Invalid types for equality comparison");
+    impl_cmp_op!(ne, !=, "Invalid types for inequality comparison");
 }
