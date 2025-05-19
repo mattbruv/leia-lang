@@ -15,7 +15,8 @@ pub fn parse_assembly(asm: &str) -> Program {
 #[derive(Debug)]
 enum UnresolvedOpcode {
     Resolved(Opcode),
-    JpLabel(String),
+    JumpLabel(String),
+    JumpZeroLabel(String),
 }
 
 /// Parses the input and resolves jumps
@@ -56,15 +57,29 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                     ConstantIndex(index_str.parse::<u32>().expect("Invalid constant index"));
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Push(index)));
             }
+            "STORE" => {
+                let index_str = parts.next().expect("STORE needs an argument");
+                let index: usize = index_str.parse::<usize>().expect("Invalid constant index");
+                unresolved.push(UnresolvedOpcode::Resolved(Opcode::StoreLocal(index)));
+            }
+            "LOAD" => {
+                let index_str = parts.next().expect("LOAD needs an argument");
+                let index: usize = index_str.parse::<usize>().expect("Invalid constant index");
+                unresolved.push(UnresolvedOpcode::Resolved(Opcode::LoadLocal(index)));
+            }
             "ADD" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Add)),
-            "SUB" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Sub)),
-            "MUL" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Mul)),
-            "DIV" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Div)),
+            "SUB" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Subtract)),
+            "MUL" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Multiply)),
+            "DIV" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Divide)),
             "PRINT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Print)),
             "HALT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Halt)),
-            "JP" => {
-                let label = parts.next().expect("JP needs a label").to_string();
-                unresolved.push(UnresolvedOpcode::JpLabel(label));
+            "JUMP" => {
+                let label = parts.next().expect("JUMP needs a label").to_string();
+                unresolved.push(UnresolvedOpcode::JumpLabel(label));
+            }
+            "JUMPZ" => {
+                let label = parts.next().expect("JUMPZ needs a label").to_string();
+                unresolved.push(UnresolvedOpcode::JumpZeroLabel(label));
             }
             _ => panic!("Unknown instruction: {}", instr),
         }
@@ -78,11 +93,17 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
     for entry in unresolved {
         match entry {
             UnresolvedOpcode::Resolved(op) => opcodes.push(op),
-            UnresolvedOpcode::JpLabel(label) => {
+            UnresolvedOpcode::JumpLabel(label) => {
                 let addr = *labels
                     .get(&label)
                     .unwrap_or_else(|| panic!("Unknown label: {label}"));
                 opcodes.push(Opcode::Jump(addr));
+            }
+            UnresolvedOpcode::JumpZeroLabel(label) => {
+                let addr = *labels
+                    .get(&label)
+                    .unwrap_or_else(|| panic!("Unknown label: {label}"));
+                opcodes.push(Opcode::JumpIfZero(addr));
             }
         }
     }
@@ -93,6 +114,7 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
 fn parse_constants(asm: &str) -> Vec<ConstantValue> {
     asm.lines()
         .filter(|x| x.starts_with(".const"))
+        .map(|x| x.split(';').next().unwrap().trim())
         .map(|line| {
             // Split into parts and collect everything after the second token as the value
             let parts: Vec<&str> = line.split_whitespace().collect();

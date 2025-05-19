@@ -11,12 +11,21 @@ pub struct ConstantIndex(pub u32);
 
 #[derive(Debug, PartialEq)]
 pub enum Opcode {
-    Push(ConstantIndex),
-    Jump(usize),
+    Push(ConstantIndex), // push a constant value
+
+    Jump(usize),       // unconditional jump
+    JumpIfZero(usize), // jump if popped value == 0
+
+    LoadLocal(usize),  // push from local variable slot
+    StoreLocal(usize), // pop into local variable slot
+
+    Equals,
+
     Add,
-    Sub,
-    Mul,
-    Div,
+    Subtract,
+    Multiply,
+    Divide,
+
     Print,
     Halt,
 }
@@ -34,7 +43,7 @@ pub enum ConstantValue {
     Str(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum LeiaValue {
     Int(i32),
     Float(f32),
