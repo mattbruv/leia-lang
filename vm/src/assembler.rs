@@ -133,13 +133,18 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
 
 fn parse_constants(asm: &str) -> Vec<ConstantValue> {
     asm.lines()
-        .filter(|x| x.starts_with(".const"))
-        .map(|x| x.split(';').next().unwrap().trim())
+        .filter(|x| x.trim_start().starts_with(".const"))
+        .map(|x| {
+            let no_comment = x.split(';').next().unwrap().trim();
+            no_comment
+        })
         .map(|line| {
-            // Split into parts and collect everything after the second token as the value
             let parts: Vec<&str> = line.split_whitespace().collect();
-            let value_str = &line[line.find(parts[2]).unwrap()..];
-            parse_const_value(value_str)
+            if parts.len() < 3 {
+                panic!("Malformed .const line: {}", line);
+            }
+            let value_str = parts[2..].join(" ");
+            parse_const_value(&value_str)
         })
         .collect()
 }

@@ -1,5 +1,3 @@
-use std::thread::panicking;
-
 use crate::instruction::{ConstantValue, LeiaValue, Opcode, Program};
 
 #[derive(Debug)]
