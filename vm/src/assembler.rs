@@ -38,6 +38,7 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
         if line.starts_with('.') {
             // Record the label as the *current* instruction index
             let label = line.trim_start_matches('.').to_string();
+            //println!("{:?} {:?}", line, instruction_index);
             labels.insert(label, instruction_index);
             continue;
         }

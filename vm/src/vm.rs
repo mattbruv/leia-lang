@@ -1,5 +1,3 @@
-use std::{process::id, thread::panicking};
-
 use crate::instruction::{ConstantValue, LeiaValue, Opcode, Program};
 
 #[derive(Debug)]
@@ -28,7 +26,7 @@ impl VM {
             }
 
             let code = &self.program.code[self.pc];
-            println!("{}: {:?}", self.pc, code);
+            //println!("{}: {:?} {:?}", self.pc, code, self.locals);
 
             match code {
                 Opcode::Push(constant_index) => {
@@ -39,7 +37,7 @@ impl VM {
                         ConstantValue::Str(x) => LeiaValue::Str(x.clone()),
                     });
                 }
-                Opcode::Jump(addr) => self.pc = *addr,
+                Opcode::Jump(addr) => self.pc = *addr - 1, // adds one back right after this to go to the correct spot
                 Opcode::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
@@ -69,11 +67,11 @@ impl VM {
                 }
                 Opcode::JumpIfZero(addr) => {
                     let val = self.stack.pop().unwrap();
-                    println!("JUMP? {:?}", val);
+                    //println!("JUMP? {:?}", val);
                     match val {
                         LeiaValue::Int(x) => {
                             if x == 0 {
-                                self.pc = *addr;
+                                self.pc = *addr - 1; // subtracting one because we add it right back after this
                             }
                         }
                         _ => panic!("Invalid jp if zero value!"),
