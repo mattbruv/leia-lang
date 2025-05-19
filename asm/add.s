@@ -1,8 +1,8 @@
 .main
-    PUSH 0      ; push 42
-    PUSH 1      ; push 10
+    PUSH 0      ; push 100
+    PUSH 1      ; push 23
     ADD         ; add
-    PRINT       ; output 52
+    PRINT       ; output ??
     HALT
 
 .const 0 100

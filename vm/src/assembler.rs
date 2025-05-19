@@ -57,6 +57,9 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Push(index)));
             }
             "ADD" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Add)),
+            "SUB" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Sub)),
+            "MUL" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Mul)),
+            "DIV" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Div)),
             "PRINT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Print)),
             "HALT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Halt)),
             "JP" => {

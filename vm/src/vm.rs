@@ -34,21 +34,24 @@ impl VM {
                 }
                 Opcode::Jump(addr) => self.pc = *addr,
                 Opcode::Add => {
-                    let a = self.stack.pop().unwrap();
                     let b = self.stack.pop().unwrap();
-
-                    match (a, b) {
-                        (LeiaValue::Int(y), LeiaValue::Int(x)) => {
-                            self.stack.push(LeiaValue::Int(x + y));
-                        }
-                        (LeiaValue::Float(y), LeiaValue::Float(x)) => {
-                            self.stack.push(LeiaValue::Float(x + y));
-                        }
-                        (LeiaValue::Str(y), LeiaValue::Str(x)) => {
-                            self.stack.push(LeiaValue::Str(x + &y));
-                        }
-                        _ => panic!("Invalid type addition"),
-                    }
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.add(b));
+                }
+                Opcode::Sub => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.sub(b));
+                }
+                Opcode::Mul => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.mul(b));
+                }
+                Opcode::Div => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.div(b));
                 }
                 Opcode::Print => {
                     let val = self.stack.pop().unwrap();
