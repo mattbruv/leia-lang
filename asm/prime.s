@@ -1,6 +1,6 @@
 .const 0 2       ; initial candidate
 .const 1 0       ; initial primes found
-.const 2 461     ; target prime count
+.const 2 46100     ; target prime count
 .const 3 1       ; constant 1
 .const 4 0       ; constant 0
 
