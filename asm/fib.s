@@ -1,4 +1,6 @@
-.const 0 7         ; n = 7
+; prints the first 46 fibonacci numbers
+
+.const 0 47         ; n = 7
 .const 1 0         ; a = 0
 .const 2 1         ; b = 1
 .const 3 2         ; counter starts at 2
@@ -29,6 +31,9 @@
 
   LOAD 2
   STORE 1          ; a = b
+  
+  LOAD 2
+  PRINT
 
   LOAD 4
   STORE 2          ; b = temp
