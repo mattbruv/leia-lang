@@ -1,3 +1,5 @@
+use std::thread::panicking;
+
 use crate::instruction::{ConstantValue, LeiaValue, Opcode, Program};
 
 #[derive(Debug)]
@@ -40,6 +42,16 @@ impl VM {
                     });
                 }
                 Opcode::Jump(addr) => self.pc = *addr - 1,
+                Opcode::Increment(idx) => {
+                    if let Some(local) = self.locals.get_mut(*idx) {
+                        match local {
+                            LeiaValue::Int(n) => *n += 1,
+                            _ => panic!("Cannot increment non-int local"),
+                        }
+                    } else {
+                        panic!("Local variable index out of bounds: {}", idx);
+                    }
+                }
                 Opcode::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();

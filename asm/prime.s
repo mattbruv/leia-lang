@@ -40,10 +40,7 @@
     STORE 3
 
 .skip_mark_not_prime
-    LOAD 2       ; divisor += 1
-    PUSH 3
-    ADD
-    STORE 2
+    INC 2       ; divisor += 1
     JUMP div_check
 
 .done_checking
@@ -52,10 +49,7 @@
     EQ
     JUMPZ skip_increment
 
-    LOAD 1       ; primes_found += 1
-    PUSH 3
-    ADD
-    STORE 1
+    INC 1 ; primes_found += 1
 
     LOAD 1       ; if primes_found == 461
     PUSH 2
@@ -68,8 +62,5 @@
 
 .skip_print
 .skip_increment
-    LOAD 0       ; candidate += 1
-    PUSH 3
-    ADD
-    STORE 0
+    INC 0 ; candidate += 1
     JUMP loop_start

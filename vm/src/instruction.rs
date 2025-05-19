@@ -19,6 +19,7 @@ pub enum Opcode {
 
     LoadLocal(usize),  // push from local variable slot
     StoreLocal(usize), // pop into local variable slot
+    Increment(usize),
 
     Equals,
     GreaterThan,
