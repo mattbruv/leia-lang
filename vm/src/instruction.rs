@@ -13,18 +13,21 @@ pub struct ConstantIndex(pub u32);
 pub enum Opcode {
     Push(ConstantIndex), // push a constant value
 
-    Jump(usize),       // unconditional jump
-    JumpIfZero(usize), // jump if popped value == 0
+    Jump(usize),          // unconditional jump
+    JumpIfZero(usize),    // jump if popped value == 0
+    JumpIfNotZero(usize), // jump if popped value != 0
 
     LoadLocal(usize),  // push from local variable slot
     StoreLocal(usize), // pop into local variable slot
 
     Equals,
+    GreaterThan,
 
     Add,
     Subtract,
     Multiply,
     Divide,
+    Modulo,
 
     Print,
     Halt,
@@ -77,6 +80,7 @@ impl LeiaValue {
     impl_arith_op!(sub, -, "Invalid types for subtraction");
     impl_arith_op!(mul, *, "Invalid types for multiplication");
     impl_arith_op!(div, /, "Invalid types for division");
+    impl_arith_op!(modulo, %, "Invalid types for division");
 
     // You can still write specialized ones by hand, like string concatenation
     pub fn add_string(self, other: LeiaValue) -> LeiaValue {

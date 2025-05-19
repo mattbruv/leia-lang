@@ -17,6 +17,7 @@ enum UnresolvedOpcode {
     Resolved(Opcode),
     JumpLabel(String),
     JumpZeroLabel(String),
+    JumpNotZeroLabel(String),
 }
 
 /// Parses the input and resolves jumps
@@ -72,7 +73,10 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
             "SUB" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Subtract)),
             "MUL" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Multiply)),
             "DIV" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Divide)),
+            "MOD" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Modulo)),
             "PRINT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Print)),
+            "EQ" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Equals)),
+            "GT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::GreaterThan)),
             "HALT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Halt)),
             "JUMP" => {
                 let label = parts.next().expect("JUMP needs a label").to_string();
@@ -81,6 +85,10 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
             "JUMPZ" => {
                 let label = parts.next().expect("JUMPZ needs a label").to_string();
                 unresolved.push(UnresolvedOpcode::JumpZeroLabel(label));
+            }
+            "JUMPNZ" => {
+                let label = parts.next().expect("JUMPZ needs a label").to_string();
+                unresolved.push(UnresolvedOpcode::JumpNotZeroLabel(label));
             }
             _ => panic!("Unknown instruction: {}", instr),
         }
@@ -105,6 +113,12 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                     .get(&label)
                     .unwrap_or_else(|| panic!("Unknown label: {label}"));
                 opcodes.push(Opcode::JumpIfZero(addr));
+            }
+            UnresolvedOpcode::JumpNotZeroLabel(label) => {
+                let addr = *labels
+                    .get(&label)
+                    .unwrap_or_else(|| panic!("Unknown label: {label}"));
+                opcodes.push(Opcode::JumpIfNotZero(addr));
             }
         }
     }

@@ -37,7 +37,7 @@ impl VM {
                         ConstantValue::Str(x) => LeiaValue::Str(x.clone()),
                     });
                 }
-                Opcode::Jump(addr) => self.pc = *addr - 1, // adds one back right after this to go to the correct spot
+                Opcode::Jump(addr) => self.pc = *addr - 1,
                 Opcode::Add => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
@@ -58,6 +58,11 @@ impl VM {
                     let a = self.stack.pop().unwrap();
                     self.stack.push(a.div(b));
                 }
+                Opcode::Modulo => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.modulo(b));
+                }
                 Opcode::Print => {
                     let val = self.stack.pop().unwrap();
                     println!("{}", val);
@@ -71,6 +76,18 @@ impl VM {
                     match val {
                         LeiaValue::Int(x) => {
                             if x == 0 {
+                                self.pc = *addr - 1; // subtracting one because we add it right back after this
+                            }
+                        }
+                        _ => panic!("Invalid jp if zero value!"),
+                    }
+                }
+                Opcode::JumpIfNotZero(addr) => {
+                    let val = self.stack.pop().unwrap();
+                    //println!("JUMP? {:?}", val);
+                    match val {
+                        LeiaValue::Int(x) => {
+                            if x != 0 {
                                 self.pc = *addr - 1; // subtracting one because we add it right back after this
                             }
                         }
@@ -97,8 +114,8 @@ impl VM {
                         panic!("Local variable index out of bounds: {}", idx);
                     }
                 }
-
                 Opcode::Equals => todo!(),
+                Opcode::GreaterThan => todo!(),
             }
 
             self.pc += 1;
