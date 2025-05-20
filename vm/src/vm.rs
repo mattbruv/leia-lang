@@ -20,7 +20,10 @@ impl VM {
             pc: 0,
             program,
             stack: vec![],
-            call_stack: vec![],
+            call_stack: vec![StackFrame {
+                locals: vec![],
+                return_address: 0,
+            }],
         }
     }
 
@@ -44,7 +47,15 @@ impl VM {
             // and then using a mutable self ref later.
             // TODO: maybe write a separate function which passes the touched properties as args to avoid this?
             let code = self.program.code[self.pc].clone();
-            //println!("{}: {:?} {:?}", self.pc, code, self.locals);
+            /*
+            println!(
+                "{}: code {:?} stack: {:?} locals: {:?}",
+                self.pc,
+                code,
+                self.stack,
+                self.locals()
+            );
+            */
 
             match code {
                 Opcode::Push(constant_index) => {
@@ -164,7 +175,7 @@ impl VM {
 
                     self.call_stack.push(frame);
 
-                    self.pc = fn_address;
+                    self.pc = fn_address - 1; // subtracting 1 because of comments above
                 }
                 Opcode::Return => {
                     // pop last frame off the stack

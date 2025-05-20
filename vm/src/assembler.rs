@@ -1,14 +1,12 @@
-use std::{collections::HashMap, io::Stdout};
+use std::collections::HashMap;
 
 use crate::instruction::{ConstantIndex, ConstantValue, Opcode, Program};
 
 pub fn parse_assembly(asm: &str) -> Program {
-    let mut program = Program {
+    Program {
         code: parse_opcodes_with_labels(asm),
         constants: parse_constants(asm),
-    };
-
-    program
+    }
 }
 
 /// Represents an unresolved jump before label resolution
