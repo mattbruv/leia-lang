@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Stdout};
 
 use crate::instruction::{ConstantIndex, ConstantValue, Opcode, Program};
 
@@ -15,6 +15,7 @@ pub fn parse_assembly(asm: &str) -> Program {
 #[derive(Debug)]
 enum UnresolvedOpcode {
     Resolved(Opcode),
+    CallLabel(String),
     JumpLabel(String),
     JumpZeroLabel(String),
     JumpNotZeroLabel(String),
@@ -87,6 +88,13 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                 let label = parts.next().expect("JUMP needs a label").to_string();
                 unresolved.push(UnresolvedOpcode::JumpLabel(label));
             }
+            "CALL" => {
+                let label = parts.next().expect("CALL needs a label").to_string();
+                unresolved.push(UnresolvedOpcode::CallLabel(label));
+            }
+            "RET" => {
+                unresolved.push(UnresolvedOpcode::Resolved(Opcode::Return));
+            }
             "JUMPZ" => {
                 let label = parts.next().expect("JUMPZ needs a label").to_string();
                 unresolved.push(UnresolvedOpcode::JumpZeroLabel(label));
@@ -124,6 +132,12 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                     .get(&label)
                     .unwrap_or_else(|| panic!("Unknown label: {label}"));
                 opcodes.push(Opcode::JumpIfNotZero(addr));
+            }
+            UnresolvedOpcode::CallLabel(label) => {
+                let addr = *labels
+                    .get(&label)
+                    .unwrap_or_else(|| panic!("Unknown label: {label}"));
+                opcodes.push(Opcode::Call(addr));
             }
         }
     }

@@ -5,6 +5,12 @@ pub struct VM {
     pc: usize,
     program: Program,
     stack: Vec<LeiaValue>,
+    call_stack: Vec<StackFrame>,
+}
+
+#[derive(Debug, Clone)]
+pub struct StackFrame {
+    return_address: usize,
     locals: Vec<LeiaValue>,
 }
 
@@ -14,8 +20,16 @@ impl VM {
             pc: 0,
             program,
             stack: vec![],
-            locals: vec![],
+            call_stack: vec![],
         }
+    }
+
+    fn locals(&self) -> &Vec<LeiaValue> {
+        &self.call_stack.last().unwrap().locals
+    }
+
+    fn locals_mut(&mut self) -> &mut Vec<LeiaValue> {
+        &mut self.call_stack.last_mut().unwrap().locals
     }
 
     pub fn run(&mut self) -> () {
@@ -25,7 +39,11 @@ impl VM {
                 break;
             }
 
-            let code = &self.program.code[self.pc];
+            // Temp hack: clone the opcode for now
+            // Having some borrow checker issues having it as an immutable ref to self
+            // and then using a mutable self ref later.
+            // TODO: maybe write a separate function which passes the touched properties as args to avoid this?
+            let code = self.program.code[self.pc].clone();
             //println!("{}: {:?} {:?}", self.pc, code, self.locals);
 
             match code {
@@ -39,9 +57,9 @@ impl VM {
                         ConstantValue::Str(x) => LeiaValue::Str(x.clone()),
                     });
                 }
-                Opcode::Jump(addr) => self.pc = *addr - 1,
+                Opcode::Jump(addr) => self.pc = addr - 1,
                 Opcode::Increment(idx) => {
-                    if let Some(local) = self.locals.get_mut(*idx) {
+                    if let Some(local) = self.locals_mut().get_mut(idx) {
                         match local {
                             LeiaValue::Int(n) => *n += 1,
                             _ => panic!("Cannot increment non-int local"),
@@ -88,7 +106,7 @@ impl VM {
                     match val {
                         LeiaValue::Int(x) => {
                             if x == 0 {
-                                self.pc = *addr - 1; // subtracting one because we add it right back after this
+                                self.pc = addr - 1; // subtracting one because we add it right back after this
                             }
                         }
                         _ => panic!("Invalid jp if zero value!"),
@@ -100,7 +118,7 @@ impl VM {
                     match val {
                         LeiaValue::Int(x) => {
                             if x != 0 {
-                                self.pc = *addr - 1; // subtracting one because we add it right back after this
+                                self.pc = addr - 1; // subtracting one because we add it right back after this
                             }
                         }
                         _ => panic!("Invalid jp if zero value!"),
@@ -108,20 +126,21 @@ impl VM {
                 }
                 Opcode::LoadLocal(idx) => {
                     let val = self
-                        .locals
-                        .get(*idx)
-                        .expect("Local variable index out of bounds");
-                    self.stack.push(val.clone());
+                        .locals()
+                        .get(idx)
+                        .expect("Local variable index out of bounds")
+                        .clone();
+                    self.stack.push(val);
                 }
                 Opcode::StoreLocal(idx) => {
                     let val = self.stack.pop().expect("Stack underflow on StoreLocal");
 
-                    if *idx == self.locals.len() {
+                    if idx == self.locals_mut().len() {
                         // Append the new local since it's exactly the next index
-                        self.locals.push(val);
-                    } else if *idx < self.locals.len() {
+                        self.locals_mut().push(val);
+                    } else if idx < self.locals_mut().len() {
                         // Overwrite existing local
-                        self.locals[*idx] = val;
+                        self.locals_mut()[idx] = val;
                     } else {
                         panic!("Local variable index out of bounds: {}", idx);
                     }
@@ -135,6 +154,23 @@ impl VM {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     self.stack.push(a.gt(b));
+                }
+                Opcode::Call(fn_address) => {
+                    // probably need to push a new stack frame
+                    let frame = StackFrame {
+                        return_address: self.pc,
+                        locals: vec![],
+                    };
+
+                    self.call_stack.push(frame);
+
+                    self.pc = fn_address;
+                }
+                Opcode::Return => {
+                    // pop last frame off the stack
+                    let frame = self.call_stack.pop().expect("Call stack underflow");
+                    // and jump to its return address
+                    self.pc = frame.return_address;
                 }
             }
 

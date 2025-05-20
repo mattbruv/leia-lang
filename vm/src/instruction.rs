@@ -6,12 +6,15 @@ pub struct Program {
     pub constants: Vec<ConstantValue>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ConstantIndex(pub u32);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Opcode {
     Push(ConstantIndex), // push a constant value
+
+    Call(usize), // call a function
+    Return,      // Return from a function
 
     Jump(usize),          // unconditional jump
     JumpIfZero(usize),    // jump if popped value == 0
