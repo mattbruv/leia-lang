@@ -1,11 +1,13 @@
 use crate::instruction::{ConstantValue, LeiaValue, Opcode, Program};
 
-#[derive(Debug)]
+type OutputHandler = Box<dyn FnMut(&LeiaValue)>;
+
 pub struct VM {
     pc: usize,
     program: Program,
     stack: Vec<LeiaValue>,
     call_stack: Vec<StackFrame>,
+    output_handler: Option<OutputHandler>,
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +26,7 @@ impl VM {
                 locals: vec![],
                 return_address: 0,
             }],
+            output_handler: None,
         }
     }
 
@@ -106,7 +109,11 @@ impl VM {
                 }
                 Opcode::Print => {
                     let val = self.stack.pop().unwrap();
-                    println!("{}", val);
+                    if let Some(handler) = self.output_handler.as_mut() {
+                        handler(&val);
+                    } else {
+                        println!("{}", val);
+                    }
                 }
                 Opcode::Halt => {
                     break;
@@ -187,5 +194,21 @@ impl VM {
 
             self.pc += 1;
         }
+    }
+
+    /**
+     * Used for debugging tests,
+     * we pass the value to the handler instead of printing it
+     *
+     */
+    pub fn set_output_handler<F>(&mut self, handler: F)
+    where
+        F: FnMut(&LeiaValue) + 'static,
+    {
+        self.output_handler = Some(Box::new(handler));
+    }
+
+    pub fn clear_output_handler(&mut self) -> () {
+        self.output_handler = None
     }
 }

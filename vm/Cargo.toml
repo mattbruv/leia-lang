@@ -7,3 +7,6 @@ edition = "2024"
 path = "src/lib.rs"
 
 [dependencies]
+
+[profile.test]
+inherits = "release"
