@@ -57,4 +57,10 @@ mod tests {
         let val = run_asm_test("../asm/prime.s");
         assert_eq!("3259", val.last().unwrap());
     }
+
+    #[test]
+    fn test_fn_factorial() {
+        let val = run_asm_test("../asm/factorial.s");
+        assert_eq!("362880", val.last().unwrap());
+    }
 }
