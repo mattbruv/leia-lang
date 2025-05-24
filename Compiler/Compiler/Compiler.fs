@@ -41,13 +41,16 @@ let constTableToString (constTable: IDictionary<int, Literal>) : string =
     |> Seq.map (fun kvp -> $".const {kvp.Key} {(formatLiteral kvp.Value)}")
     |> String.concat "\n"
 
-let allLiterals (statements: Statement list) =
+let rec allExpressionLiterals (expr: Expression) : Literal list =
+    match expr with
+    | Literal literal -> [ literal ]
+    | BinaryOp(_, left, right) -> [ left; right ] |> List.collect allExpressionLiterals
+
+let allLiterals (statements: Statement list) : Literal list =
     statements
-    |> List.map (fun l ->
+    |> List.collect (fun l ->
         match l with
-        | Print e ->
-            match e with
-            | Literal l -> l)
+        | Print e -> allExpressionLiterals e)
 
 let compile (program: Statement list) : string =
     printf "%A\n" program
