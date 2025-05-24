@@ -373,15 +373,11 @@ let pgrouping =
 
 // A primary expression is either a literal value or a grouping
 let pprimary: Parser<Expression> =
-    let wrap (p: Parser<Literal>) = p |>> Expression.Literal
+    let literalParsers =
+        [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
+        |> List.map (fun p -> p |>> Literal)
 
-    choice
-        [ pgrouping
-          wrap pstringLiteral
-          wrap pfloat
-          wrap pint
-          wrap pbool
-          wrap pidentifier ]
+    choice (pgrouping :: literalParsers)
 
 let pfactor: Parser<Expression> =
     let operator = (pchar '*') <|> (pchar '/')
