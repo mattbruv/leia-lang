@@ -3,6 +3,8 @@ module Compiler
 open System.Collections.Generic
 open Grammar
 
+type ConstTable = IDictionary<int, Literal>
+
 let formatLiteral literal =
     match literal with
     | Int i -> i.ToString()
@@ -27,15 +29,39 @@ let collectConstantsFromList (lits: Literal list) =
 let buildConstantTable (constants: seq<Literal>) =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
 
-let rec compileLiteral (literal: Literal) : string =
-    match literal with
-    | Boolean a -> a.ToString()
-    | Int i -> i.ToString()
-    | Float f -> f.ToString()
-    | LString s -> s.ToString()
-    | Identifier s -> s.ToString()
+let rec compileLiteral (literal: Literal) (table: ConstTable) : string =
 
-let constTableToString (constTable: IDictionary<int, Literal>) : string =
+    let key =
+        table
+        |> Seq.tryFind (fun kvp -> kvp.Value = literal)
+        |> Option.map (fun kvp -> kvp.Key)
+
+    match key with
+    | Some constIndex -> $"PUSH {constIndex}"
+    | None -> failwith $"Literal not found in constant table: {literal}"
+
+let rec compileExpression e (table: ConstTable) : string =
+    match e with
+    | BinaryOp(op, left, right) ->
+        let leftInstrs = compileExpression left table
+        let rightInstrs = compileExpression right table
+
+        let opInstr =
+            match op with
+            | Multiply -> "MUL"
+            | Divide -> "DIV"
+            | Add -> "ADD"
+            | Subtract -> "SUB"
+
+        [ leftInstrs; rightInstrs; opInstr ] |> String.concat "\n"
+
+    | Literal literal -> compileLiteral literal table
+
+let compileStatement (statement: Statement) table : string =
+    match statement with
+    | Print e -> compileExpression e table
+
+let constTableToString (constTable: ConstTable) : string =
     constTable
     //
     |> Seq.map (fun kvp -> $".const {kvp.Key} {(formatLiteral kvp.Value)}")
@@ -57,6 +83,8 @@ let compile (program: Statement list) : string =
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
-    let output = [ (constTableToString constTable) ]
+    let statements = program |> List.map (fun x -> (compileStatement x constTable))
+
+    let output = (constTableToString constTable) :: statements
 
     output |> String.concat "\n\n"
