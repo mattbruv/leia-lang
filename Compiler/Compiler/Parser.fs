@@ -366,22 +366,25 @@ let createParserForwardedToRef<'a> () =
     wrapperParser, parserRef
 
 
-let pexpression, pexpressionRef = createParserForwardedToRef<Literal> ()
+let pexpression, pexpressionRef = createParserForwardedToRef<Expression> ()
 
 let pgrouping =
     between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
 
-let pliteral =
-    choice [ pgrouping; pstringLiteral; pfloat; pint; pbool; pidentifier ]
+// A primary expression is either a literal value or a grouping
+let pprimary: Parser<Expression> =
+    let literalParsers =
+        [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
+        |> List.map (fun p -> p |>> Literal)
 
+    choice (pgrouping :: literalParsers)
 
-
-let pfactor: Parser<Literal> =
+let pfactor: Parser<Expression> =
     let operator = (pchar '*') <|> (pchar '/')
 
-    let opAndLiteral = whitespace >>. operator .>> whitespace .>>. pliteral
+    let opAndPrimary = whitespace >>. operator .>> whitespace .>>. pprimary
 
-    pliteral .>>. many opAndLiteral
+    pprimary .>>. many opAndPrimary
     |>> fun (first, rest) ->
         // fold the list into a binary operation chain
         rest
@@ -393,7 +396,7 @@ let pfactor: Parser<Literal> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
-let pterm: Parser<Literal> =
+let pterm: Parser<Expression> =
     let operator = (pchar '+') <|> (pchar '-')
     let opAndFactor = whitespace >>. operator .>> whitespace .>>. pfactor
 
@@ -409,10 +412,15 @@ let pterm: Parser<Literal> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
-//let pexpression = choice [ pliteral ]
+let pstatement: Parser<Statement> =
+    let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
+
+    printStatement
+
+
 pexpressionRef.Value <- choice [ pterm ]
 
 let program =
-    many whitespaceChar >>. sepBy1 pexpression whitespace1
+    many whitespaceChar >>. sepBy1 pstatement whitespace1
     .>> many whitespaceChar
     .>> eof

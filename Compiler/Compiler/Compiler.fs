@@ -10,7 +10,6 @@ let formatLiteral literal =
     | LString s -> $"\"{s}\""
     | Boolean b -> b.ToString()
     | Identifier s -> s
-    | BinaryOp(binaryOp, left, right) -> $"{left} {binaryOp} {right}"
 
 let rec collectConstants (constants: HashSet<Literal>) (lit: Literal) =
     match lit with
@@ -18,9 +17,6 @@ let rec collectConstants (constants: HashSet<Literal>) (lit: Literal) =
     | Float _
     | Boolean _
     | LString _ -> constants.Add(lit) |> ignore
-    | BinaryOp(_, left, right) ->
-        collectConstants constants left
-        collectConstants constants right
     | Identifier _ -> ()
 
 let collectConstantsFromList (lits: Literal list) =
@@ -38,14 +34,6 @@ let rec compileLiteral (literal: Literal) : string =
     | Float f -> f.ToString()
     | LString s -> s.ToString()
     | Identifier s -> s.ToString()
-    | BinaryOp(binaryOp, left, right) ->
-        "( "
-        + compileLiteral left
-        + " "
-        + binaryOp.ToString()
-        + " "
-        + compileLiteral right
-        + " )"
 
 let constTableToString (constTable: IDictionary<int, Literal>) : string =
     constTable
@@ -53,7 +41,22 @@ let constTableToString (constTable: IDictionary<int, Literal>) : string =
     |> Seq.map (fun kvp -> $".const {kvp.Key} {(formatLiteral kvp.Value)}")
     |> String.concat "\n"
 
-let compile (program: Literal list) : string =
-    let constTable = buildConstantTable (collectConstantsFromList program)
+let rec allExpressionLiterals (expr: Expression) : Literal list =
+    match expr with
+    | Literal literal -> [ literal ]
+    | BinaryOp(_, left, right) -> [ left; right ] |> List.collect allExpressionLiterals
 
-    $"%s{constTableToString constTable}"
+let allLiterals (statements: Statement list) : Literal list =
+    statements
+    |> List.collect (fun l ->
+        match l with
+        | Print e -> allExpressionLiterals e)
+
+let compile (program: Statement list) : string =
+    printf "%A\n" program
+    let literals = allLiterals program
+    let constTable = buildConstantTable (collectConstantsFromList literals)
+
+    let output = [ (constTableToString constTable) ]
+
+    output |> String.concat "\n\n"
