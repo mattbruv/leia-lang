@@ -77,12 +77,19 @@ let allLiterals (statements: Statement list) : Literal list =
         | Print e -> allExpressionLiterals e)
 
 let compile (program: Statement list) : string =
-    printf "%A\n" program
+    //printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
     let statements = program |> List.map (fun x -> (compileStatement x constTable))
 
-    let output = (constTableToString constTable) :: statements
+    let head = ".main"
+
+    let main =
+        [ head
+          (statements |> List.map (_.ReplaceLineEndings("\n    ")) |> String.concat "\n")
+          "HALT" ]
+
+    let output = (constTableToString constTable) :: main
 
     output |> String.concat "\n\n"
