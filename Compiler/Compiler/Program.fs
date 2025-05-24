@@ -1,6 +1,5 @@
 ﻿module Program
 
-open System.Collections.Generic
 open System.IO
 open Parser
 open Compiler

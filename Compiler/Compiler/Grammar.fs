@@ -1,5 +1,7 @@
 module Grammar
 
+open System.Linq.Expressions
+
 type BinaryOp =
     | Multiply
     | Divide
@@ -12,10 +14,14 @@ type Literal =
     | LString of string
     | Boolean of bool
     | Identifier of string
-    | BinaryOp of BinaryOp * Literal * Literal
 
 type Expression =
-    //
     | Literal of Literal
+    | BinaryOp of BinaryOp * Expression * Expression
+
+type Statement =
+    //
+    | Print of Expression
+
 
 // a parser of a literal should be one of pint, pstring, or pbool

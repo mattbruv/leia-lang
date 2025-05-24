@@ -366,22 +366,21 @@ let createParserForwardedToRef<'a> () =
     wrapperParser, parserRef
 
 
-let pexpression, pexpressionRef = createParserForwardedToRef<Literal> ()
+let pexpression, pexpressionRef = createParserForwardedToRef<Expression> ()
 
 let pgrouping =
     between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
 
-let pliteral =
-    choice [ pgrouping; pstringLiteral; pfloat; pint; pbool; pidentifier ]
+let pliteral = choice [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
 
 
 
-let pfactor: Parser<Literal> =
+let pfactor: Parser<Expression> =
     let operator = (pchar '*') <|> (pchar '/')
 
-    let opAndLiteral = whitespace >>. operator .>> whitespace .>>. pliteral
+    let opAndLiteral = whitespace >>. operator .>> whitespace .>>. pexpression
 
-    pliteral .>>. many opAndLiteral
+    pexpression .>>. many opAndLiteral
     |>> fun (first, rest) ->
         // fold the list into a binary operation chain
         rest
@@ -393,7 +392,7 @@ let pfactor: Parser<Literal> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
-let pterm: Parser<Literal> =
+let pterm: Parser<Expression> =
     let operator = (pchar '+') <|> (pchar '-')
     let opAndFactor = whitespace >>. operator .>> whitespace .>>. pfactor
 
@@ -409,10 +408,15 @@ let pterm: Parser<Literal> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
-//let pexpression = choice [ pliteral ]
-pexpressionRef.Value <- choice [ pterm ]
+let pstatement: Parser<Statement> =
+    let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
+
+    printStatement
+
+
+pexpressionRef.Value <- choice [ pterm; pgrouping ]
 
 let program =
-    many whitespaceChar >>. sepBy1 pexpression whitespace1
+    many whitespaceChar >>. sepBy1 pstatement whitespace1
     .>> many whitespaceChar
     .>> eof
