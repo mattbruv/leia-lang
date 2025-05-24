@@ -414,10 +414,14 @@ let pterm: Parser<Expression> =
             first
 
 let passignment: Parser<Expression> =
-    pidentifier .>> (whitespace >>. (pchar '=') .>> whitespace) .>>. pexpression
-    |>> fun (Identifier name, expr) -> Assignment(name, expr)
-    <|> pterm
-//<|> pterm
+    let passign =
+        pidentifier .>> (whitespace >>. (pchar '=') .>> whitespace) .>>. pexpression
+        |>> fun (x, expr) ->
+            match x with
+            | Identifier s -> Assignment(s, expr)
+            | _ -> failwith "Must assign to an identifier"
+
+    passign <|> pterm
 
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
