@@ -2,8 +2,17 @@ module Compiler
 
 open System.Collections.Generic
 open Grammar
+open Opcodes
 
 type ConstTable = IDictionary<int, Literal>
+
+type Emitted =
+    | Instruction of Opcode * string option
+    | Label of string
+    | Comment of string
+
+let emit opcode : Emitted = Instruction(opcode, None)
+let emitWithComment (opcode, comment) = Instruction(opcode, comment)
 
 let formatLiteral literal =
     match literal with
@@ -29,16 +38,16 @@ let collectConstantsFromList (lits: Literal list) =
 let buildConstantTable (constants: seq<Literal>) =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
 
-let rec compileLiteral (literal: Literal) (table: ConstTable) : string =
+let rec compileLiteral (literal: Literal) (table: ConstTable) : Emitted list =
 
     let maybeEntry =
         table |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
 
     match maybeEntry with
-    | Some entry -> $"PUSH {entry.Key} ;{formatLiteral entry.Value}"
+    | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ]
     | None -> failwith $"Literal not found in constant table: {literal}"
 
-let rec compileExpression e (table: ConstTable) : string =
+let rec compileExpression e (table: ConstTable) : Emitted list =
     match e with
     | BinaryOp(op, left, right) ->
         let leftInstrs = compileExpression left table
@@ -46,19 +55,19 @@ let rec compileExpression e (table: ConstTable) : string =
 
         let opInstr =
             match op with
-            | Multiply -> "MUL"
-            | Divide -> "DIV"
-            | Add -> "ADD"
-            | Subtract -> "SUB"
-            | Modulo -> "MOD"
+            | Multiply -> emit Mul
+            | Divide -> emit Div
+            | BinaryOp.Add -> emit Add
+            | Subtract -> emit Sub
+            | Modulo -> emit Mod
 
-        [ leftInstrs; rightInstrs; opInstr ] |> String.concat "\n"
+        leftInstrs @ rightInstrs @ [ opInstr ]
 
     | Literal literal -> compileLiteral literal table
 
-let compileStatement (statement: Statement) table : string =
+let compileStatement (statement: Statement) table : Emitted list =
     match statement with
-    | Print e -> [ (compileExpression e table); "PRINT" ] |> String.concat "\n"
+    | Statement.Print e -> (compileExpression e table) @ [ emit Print ]
 
 let constTableToString (constTable: ConstTable) : string =
     constTable
@@ -75,22 +84,52 @@ let allLiterals (statements: Statement list) : Literal list =
     statements
     |> List.collect (fun l ->
         match l with
-        | Print e -> allExpressionLiterals e)
+        | Statement.Print e -> allExpressionLiterals e)
+
+let emittedToString emitted =
+    match emitted with
+    | Label s -> "." + s
+    | Comment s -> "; " + s
+    | Instruction(opcode, stringOption) ->
+        let op =
+            match opcode with
+            | PushConstant i -> "PUSH " + i.ToString()
+            | Call s -> "CALL " + s
+            | Return -> "RET"
+            | Jump s -> "JUMP " + s
+            | JumpIfZero s -> "JUMPZ " + s
+            | JumpIfNotZero s -> "JUMPNZ " + s
+            | Equals -> "EQ"
+            | GreaterThan -> "GT"
+            | Add -> "ADD"
+            | Sub -> "SUB"
+            | Mul -> "MUL"
+            | Div -> "DIV"
+            | Mod -> "MOD"
+            | Print -> "PRINT"
+            | Halt -> "HALT"
+
+        match stringOption with
+        | Some value -> op + " ; " + value
+        | None -> op
 
 let compile (program: Statement list) : string =
     //printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
-    let statements = program |> List.map (fun x -> (compileStatement x constTable))
+    let statements = program |> List.collect (fun x -> (compileStatement x constTable))
 
-    let head = ".main"
+    let main = Label "main"
+    let halt = emit Halt
+
+    let programEmitted: Emitted list = (main :: statements) @ [ halt ]
 
     let main =
-        [ head
-          (statements |> List.map (_.ReplaceLineEndings("\n    ")) |> String.concat "\n")
-          "HALT" ]
+        programEmitted
+        //
+        |> List.map emittedToString
+        |> String.concat "\n"
 
-    let output = (constTableToString constTable) :: main
-
-    output |> String.concat "\n\n"
+    let output = (constTableToString constTable) + "\n\n" + main
+    output
