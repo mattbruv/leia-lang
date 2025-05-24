@@ -11,6 +11,9 @@ type Opcode =
     | JumpIfZero of string
     | JumpIfNotZero of string
 
+    | LoadLocal of int
+    | StoreLocal of int
+
     | Equals
     | GreaterThan
 

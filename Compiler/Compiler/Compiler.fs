@@ -46,12 +46,22 @@ let buildConstantTable (constants: seq<Literal>) =
 
 let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
 
-    let maybeEntry =
-        env.constTable |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
+    match literal with
+    | Identifier ident ->
+        let maybeEntry =
+            env.locals |> Seq.tryFind (fun kvp -> kvp.Key = ident) |> Option.map id
 
-    match maybeEntry with
-    | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ]
-    | None -> failwith $"Literal not found in constant table: {literal}"
+        match maybeEntry with
+        | Some entry -> [ emit (LoadLocal entry.Value) ]
+        | None -> failwith $"Identifier not found in table: {ident}"
+
+    | _ ->
+        let maybeEntry =
+            env.constTable |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
+
+        match maybeEntry with
+        | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ]
+        | None -> failwith $"Literal not found in constant table: {literal}"
 
 let rec compileExpression e (env: CompilerEnv) : Emitted list =
     match e with
@@ -70,10 +80,12 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list =
         leftInstrs @ rightInstrs @ [ opInstr ]
 
     | Literal literal -> compileLiteral literal env
+    | Assignment(s, expression) -> [ emit (LoadLocal 1) ] @ compileExpression expression env
 
-let compileStatement (statement: Statement) table : Emitted list =
+let compileStatement (statement: Statement) env : Emitted list =
     match statement with
-    | Statement.Print e -> (compileExpression e table) @ [ emit Print ]
+    | Statement.Print e -> (compileExpression e env) @ [ emit Print ]
+    | Statement.Expr e -> (compileExpression e env)
 
 let constTableToString (constTable: ConstTable) : string =
     constTable
@@ -85,12 +97,14 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
     match expr with
     | Literal literal -> [ literal ]
     | BinaryOp(_, left, right) -> [ left; right ] |> List.collect allExpressionLiterals
+    | Assignment(_, expression) -> allExpressionLiterals expression
 
 let allLiterals (statements: Statement list) : Literal list =
     statements
     |> List.collect (fun l ->
         match l with
-        | Statement.Print e -> allExpressionLiterals e)
+        | Statement.Print e -> allExpressionLiterals e
+        | Statement.Expr e -> allExpressionLiterals e)
 
 let emittedToString emitted =
     match emitted with
@@ -114,13 +128,15 @@ let emittedToString emitted =
             | Mod -> "MOD"
             | Print -> "PRINT"
             | Halt -> "HALT"
+            | LoadLocal i -> "LOAD " + i.ToString()
+            | StoreLocal i -> "STORE " + i.ToString()
 
         match stringOption with
         | Some value -> op + " ; " + value
         | None -> op
 
 let compile (program: Statement list) : string =
-    //printf "%A\n" program
+    printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 

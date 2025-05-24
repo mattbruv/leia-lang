@@ -413,13 +413,20 @@ let pterm: Parser<Expression> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
+let passignment: Parser<Expression> =
+    pidentifier .>> (whitespace >>. (pchar '=') .>> whitespace) .>>. pexpression
+    |>> fun (Identifier name, expr) -> Assignment(name, expr)
+    <|> pterm
+//<|> pterm
+
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
+    let exprStatement = pexpression |>> Expr
 
-    printStatement
+    choice [ printStatement; exprStatement ]
 
 
-pexpressionRef.Value <- choice [ pterm ]
+pexpressionRef.Value <- passignment
 
 let program =
     many whitespaceChar >>. sepBy1 pstatement whitespace1
