@@ -8,11 +8,15 @@
     <ItemGroup>
         <Compile Include="Grammar.fs"/>
         <Compile Include="Parser.fs"/>
+        <Compile Include="Compiler.fs"/>
         <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
         <Content Include="examples\syntax.leia">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="examples\add.leia">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
     </ItemGroup>

@@ -392,6 +392,7 @@ let pfactor: Parser<Literal> =
                 | '/' -> BinaryOp(Divide, acc, next)
                 | _ -> failwith $"Unexpected operator: {op}")
             first
+
 let pterm: Parser<Literal> =
     let operator = (pchar '+') <|> (pchar '-')
     let opAndFactor = whitespace >>. operator .>> whitespace .>>. pfactor
@@ -410,3 +411,8 @@ let pterm: Parser<Literal> =
 
 //let pexpression = choice [ pliteral ]
 pexpressionRef.Value <- choice [ pterm ]
+
+let program =
+    many whitespaceChar >>. sepBy1 pexpression whitespace1
+    .>> many whitespaceChar
+    .>> eof
