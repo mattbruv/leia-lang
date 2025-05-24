@@ -58,15 +58,15 @@ let buildConstantTable (constants: seq<Literal>) : ConstTable =
 let buildLocalsTable (locals: seq<string>) : LocalMap =
     locals |> Seq.mapi (fun idx ident -> ident, idx) |> Map
 
+let getLocal env ident =
+    env.locals |> Seq.tryFind (fun kvp -> kvp.Key = ident) |> Option.map id
+
 let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
 
     match literal with
     | Identifier ident ->
-        let maybeEntry =
-            env.locals |> Seq.tryFind (fun kvp -> kvp.Key = ident) |> Option.map id
-
-        match maybeEntry with
-        | Some entry -> [ emit (LoadLocal entry.Value) ]
+        match getLocal env ident with
+        | Some entry -> [ emitWithComment (LoadLocal entry.Value, Some entry.Key) ]
         | None -> failwith $"Identifier not found in table: {ident}"
 
     | _ ->
@@ -94,7 +94,11 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list =
         leftInstrs @ rightInstrs @ [ opInstr ]
 
     | Literal literal -> compileLiteral literal env
-    | Assignment(s, expression) -> [ emit (LoadLocal 1) ] @ compileExpression expression env
+    | Assignment(ident, expression) ->
+        match getLocal env ident with
+        | Some kv -> compileExpression expression env @ [ emit (StoreLocal kv.Value) ]
+        | None -> failwith $"Identifier not found in table: {ident}"
+
 
 let compileStatement (statement: Statement) env : Emitted list =
     match statement with
@@ -150,7 +154,7 @@ let emittedToString emitted =
         | None -> op
 
 let compile (program: Statement list) : string =
-    printf "%A\n" program
+    // printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
     let locals = buildLocalsTable (collectLocalsFromList literals)
