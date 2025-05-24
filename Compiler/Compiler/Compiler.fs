@@ -100,9 +100,11 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list =
             let out = compileExpression expression env
 
             let doPop =
-                match List.rev out with
-                | Instruction(StoreLocal index, _) :: _rest ->
-                    [ emitWithComment (LoadLocal index, Some "need to pop this before assigning") ]
+                match expression with
+                | Assignment(s, _expr) ->
+                    match getLocal env s with
+                    | None -> []
+                    | Some value -> [ emitWithComment (LoadLocal value.Value, Some $"load {s} again") ]
                 | _ -> []
 
             out @ doPop @ [ emitWithComment ((StoreLocal kv.Value), Some $"{kv.Key}") ]
