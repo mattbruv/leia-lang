@@ -31,13 +31,11 @@ let buildConstantTable (constants: seq<Literal>) =
 
 let rec compileLiteral (literal: Literal) (table: ConstTable) : string =
 
-    let key =
-        table
-        |> Seq.tryFind (fun kvp -> kvp.Value = literal)
-        |> Option.map (fun kvp -> kvp.Key)
+    let maybeEntry =
+        table |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
 
-    match key with
-    | Some constIndex -> $"PUSH {constIndex}"
+    match maybeEntry with
+    | Some entry -> $"PUSH {entry.Key} ;{formatLiteral entry.Value}"
     | None -> failwith $"Literal not found in constant table: {literal}"
 
 let rec compileExpression e (table: ConstTable) : string =
@@ -59,7 +57,7 @@ let rec compileExpression e (table: ConstTable) : string =
 
 let compileStatement (statement: Statement) table : string =
     match statement with
-    | Print e -> compileExpression e table
+    | Print e -> [ (compileExpression e table); "PRINT" ] |> String.concat "\n"
 
 let constTableToString (constTable: ConstTable) : string =
     constTable
