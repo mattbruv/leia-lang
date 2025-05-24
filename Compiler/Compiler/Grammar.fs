@@ -5,6 +5,7 @@ open System.Linq.Expressions
 type BinaryOp =
     | Multiply
     | Divide
+    | Modulo
     | Add
     | Subtract
 

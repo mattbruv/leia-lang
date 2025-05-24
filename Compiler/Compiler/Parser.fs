@@ -380,7 +380,7 @@ let pprimary: Parser<Expression> =
     choice (pgrouping :: literalParsers)
 
 let pfactor: Parser<Expression> =
-    let operator = (pchar '*') <|> (pchar '/')
+    let operator = (pchar '*') <|> (pchar '/') <|> (pchar '%')
 
     let opAndPrimary = whitespace >>. operator .>> whitespace .>>. pprimary
 
@@ -392,6 +392,7 @@ let pfactor: Parser<Expression> =
             (fun acc (op, next) ->
                 match op with
                 | '*' -> BinaryOp(Multiply, acc, next)
+                | '%' -> BinaryOp(Modulo, acc, next)
                 | '/' -> BinaryOp(Divide, acc, next)
                 | _ -> failwith $"Unexpected operator: {op}")
             first

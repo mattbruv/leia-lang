@@ -50,6 +50,7 @@ let rec compileExpression e (table: ConstTable) : string =
             | Divide -> "DIV"
             | Add -> "ADD"
             | Subtract -> "SUB"
+            | Modulo -> "MOD"
 
         [ leftInstrs; rightInstrs; opInstr ] |> String.concat "\n"
 
