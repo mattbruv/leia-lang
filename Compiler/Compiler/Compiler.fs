@@ -2,9 +2,15 @@ module Compiler
 
 open System.Collections.Generic
 open Grammar
+open Microsoft.FSharp.Collections
 open Opcodes
 
 type ConstTable = IDictionary<int, Literal>
+type LocalMap = Map<string, int>
+
+type CompilerEnv =
+    { locals: LocalMap
+      constTable: ConstTable }
 
 type Emitted =
     | Instruction of Opcode * string option
@@ -38,20 +44,20 @@ let collectConstantsFromList (lits: Literal list) =
 let buildConstantTable (constants: seq<Literal>) =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
 
-let rec compileLiteral (literal: Literal) (table: ConstTable) : Emitted list =
+let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
 
     let maybeEntry =
-        table |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
+        env.constTable |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
 
     match maybeEntry with
     | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ]
     | None -> failwith $"Literal not found in constant table: {literal}"
 
-let rec compileExpression e (table: ConstTable) : Emitted list =
+let rec compileExpression e (env: CompilerEnv) : Emitted list =
     match e with
     | BinaryOp(op, left, right) ->
-        let leftInstrs = compileExpression left table
-        let rightInstrs = compileExpression right table
+        let leftInstrs = compileExpression left env
+        let rightInstrs = compileExpression right env
 
         let opInstr =
             match op with
@@ -63,7 +69,7 @@ let rec compileExpression e (table: ConstTable) : Emitted list =
 
         leftInstrs @ rightInstrs @ [ opInstr ]
 
-    | Literal literal -> compileLiteral literal table
+    | Literal literal -> compileLiteral literal env
 
 let compileStatement (statement: Statement) table : Emitted list =
     match statement with
@@ -118,7 +124,11 @@ let compile (program: Statement list) : string =
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
-    let statements = program |> List.collect (fun x -> (compileStatement x constTable))
+    let env: CompilerEnv =
+        { locals = Map.empty
+          constTable = constTable }
+
+    let statements = program |> List.collect (fun x -> (compileStatement x env))
 
     let main = Label "main"
     let halt = emit Halt
