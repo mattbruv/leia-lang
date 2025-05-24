@@ -1,23 +1,17 @@
-.const 0 100
-.const 1 2
-.const 2 3
-.const 3 500
+.const 0 3
 
 .main
-PUSH 0 ; 100
-PUSH 1 ; 2
-PUSH 2 ; 3
-ADD
-MUL
-STORE 0
-LOAD 0 ; x
-PRINT
-LOAD 0 ; x
-PUSH 3 ; 500
-ADD
-STORE 1
-LOAD 0 ; x
+PUSH 0 ; 3
+STORE 0 ; z
+LOAD 0 ; need to pop this before assigning
+STORE 1 ; y
+LOAD 1 ; need to pop this before assigning
+STORE 2 ; x
+LOAD 2 ; x
 LOAD 1 ; y
+ADD
+LOAD 0 ; z
 ADD
 PRINT
 HALT
+

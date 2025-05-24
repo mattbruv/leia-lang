@@ -56,7 +56,7 @@ let buildConstantTable (constants: seq<Literal>) : ConstTable =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
 
 let buildLocalsTable (locals: seq<string>) : LocalMap =
-    locals |> Seq.mapi (fun idx ident -> ident, idx) |> Map
+    locals |> Seq.rev |> Seq.mapi (fun idx ident -> ident, idx) |> Map
 
 let getLocal env ident =
     env.locals |> Seq.tryFind (fun kvp -> kvp.Key = ident) |> Option.map id
@@ -96,7 +96,16 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list =
     | Literal literal -> compileLiteral literal env
     | Assignment(ident, expression) ->
         match getLocal env ident with
-        | Some kv -> compileExpression expression env @ [ emit (StoreLocal kv.Value) ]
+        | Some kv ->
+            let out = compileExpression expression env
+
+            let doPop =
+                match List.rev out with
+                | Instruction(StoreLocal index, _) :: _rest ->
+                    [ emitWithComment (LoadLocal index, Some "need to pop this before assigning") ]
+                | _ -> []
+
+            out @ doPop @ [ emitWithComment ((StoreLocal kv.Value), Some $"{kv.Key}") ]
         | None -> failwith $"Identifier not found in table: {ident}"
 
 
