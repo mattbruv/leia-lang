@@ -36,13 +36,27 @@ let rec collectConstants (constants: HashSet<Literal>) (lit: Literal) =
     | LString _ -> constants.Add(lit) |> ignore
     | Identifier _ -> ()
 
+let rec collectLiterals (literals: HashSet<string>) (lit: Literal) =
+    match lit with
+    | Identifier ident -> literals.Add(ident) |> ignore
+    | _ -> ()
+
 let collectConstantsFromList (lits: Literal list) =
     let constants = HashSet()
     lits |> List.iter (collectConstants constants)
     constants
 
-let buildConstantTable (constants: seq<Literal>) =
+let collectLocalsFromList (lits: Literal list) =
+    let constants = HashSet()
+    lits |> List.iter (collectLiterals constants)
+    constants
+
+
+let buildConstantTable (constants: seq<Literal>) : ConstTable =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
+
+let buildLocalsTable (locals: seq<string>) : LocalMap =
+    locals |> Seq.mapi (fun idx ident -> ident, idx) |> Map
 
 let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
 
@@ -139,9 +153,10 @@ let compile (program: Statement list) : string =
     printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
+    let locals = buildLocalsTable (collectLocalsFromList literals)
 
     let env: CompilerEnv =
-        { locals = Map.empty
+        { locals = locals
           constTable = constTable }
 
     let statements = program |> List.collect (fun x -> (compileStatement x env))
