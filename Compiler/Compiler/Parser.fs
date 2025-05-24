@@ -371,7 +371,8 @@ let pexpression, pexpressionRef = createParserForwardedToRef<Expression> ()
 let pgrouping =
     between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
 
-let pliteral: Parser<Expression> =
+// A primary expression is either a literal value or a grouping
+let pprimary: Parser<Expression> =
     let wrap (p: Parser<Literal>) = p |>> Expression.Literal
 
     choice
@@ -385,9 +386,9 @@ let pliteral: Parser<Expression> =
 let pfactor: Parser<Expression> =
     let operator = (pchar '*') <|> (pchar '/')
 
-    let opAndLiteral = whitespace >>. operator .>> whitespace .>>. pliteral
+    let opAndPrimary = whitespace >>. operator .>> whitespace .>>. pprimary
 
-    pliteral .>>. many opAndLiteral
+    pprimary .>>. many opAndPrimary
     |>> fun (first, rest) ->
         // fold the list into a binary operation chain
         rest
