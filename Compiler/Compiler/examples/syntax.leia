@@ -1,10 +1,8 @@
-fn factorial(n) {
-    if (n == 0) {
-        1
-    } else {
-        n * factorial(n - 1)
-    }
-}
 
-let result = factorial(5)
-print(result)
+1 * ( 5 + 5 + 3 + 8) + 1
+
+4
+
+"hi mom"
+
+1 + 300 + 2340

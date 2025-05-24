@@ -351,7 +351,62 @@ let pstringLiteral =
     between (pchar '"') stringChars (pchar '"') |>> String.Concat |>> LString
     <?> "string literal"
 
+let createParserForwardedToRef<'a> () =
+    let dummyParser: Parser<'a> =
+        let innerFn _ = failwith "unfixed forwarded parser"
+        { parseFn = innerFn; label = "unknown" }
 
-let pliteral = choice [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
+    // mutable pointer to placeholder Parser
+    let parserRef = ref dummyParser
 
-let pexpression = choice [ pliteral ]
+    // wrapper parser
+    let innerFn input = runOnInput parserRef.Value input
+    let wrapperParser = { parseFn = innerFn; label = "unknown" }
+
+    wrapperParser, parserRef
+
+
+let pexpression, pexpressionRef = createParserForwardedToRef<Literal> ()
+
+let pgrouping =
+    between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
+
+let pliteral =
+    choice [ pgrouping; pstringLiteral; pfloat; pint; pbool; pidentifier ]
+
+
+
+let pfactor: Parser<Literal> =
+    let operator = (pchar '*') <|> (pchar '/')
+
+    let opAndLiteral = whitespace >>. operator .>> whitespace .>>. pliteral
+
+    pliteral .>>. many opAndLiteral
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | '*' -> BinaryOp(Multiply, acc, next)
+                | '/' -> BinaryOp(Divide, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
+let pterm: Parser<Literal> =
+    let operator = (pchar '+') <|> (pchar '-')
+    let opAndFactor = whitespace >>. operator .>> whitespace .>>. pfactor
+
+    pfactor .>>. many opAndFactor
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | '+' -> BinaryOp(Add, acc, next)
+                | '-' -> BinaryOp(Subtract, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
+
+//let pexpression = choice [ pliteral ]
+pexpressionRef.Value <- choice [ pterm ]
