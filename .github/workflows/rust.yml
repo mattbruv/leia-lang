@@ -36,5 +36,6 @@ jobs:
 
       - name: Run tests
         run: |
+          mkdir tests/out
           cd vm
           cargo test --verbose
