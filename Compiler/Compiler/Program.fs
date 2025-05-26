@@ -32,7 +32,9 @@ let main argv =
             let program = $"%s{compile literals}"
             writeOutput (Some outputPath) program
             0
-        | Failure _ -> 1
+        | Failure(label, error, pos) ->
+            writeOutput (Some outputPath) (printResult (Failure(label, error, pos)))
+            1
     | _ ->
         eprintfn "Usage: compiler.exe <input> [output]"
         1

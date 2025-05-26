@@ -83,13 +83,13 @@ type Parser<'a> =
 
 let printResult result =
     match result with
-    | Success(value, _input) -> printfn $"%A{value}"
+    | Success(value, _input) -> $"%A{value}"
     | Failure(label, error, parserPos) ->
         let errorLine = parserPos.currentLine
         let colPos = parserPos.column
         let linePos = parserPos.line
         let failureCaret = sprintf "%*s^%s" colPos "" error
-        printfn $"Line: %i{linePos} Col: %i{colPos} Error parsing %s{label}\n%s{errorLine}\n%s{failureCaret}"
+        $"Line: %i{linePos} Col: %i{colPos} Error parsing %s{label}\n%s{errorLine}\n%s{failureCaret}"
 
 let runOnInput parser input = parser.parseFn input
 
