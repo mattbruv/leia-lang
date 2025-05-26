@@ -58,6 +58,9 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                     ConstantIndex(index_str.parse::<u32>().expect("Invalid constant index"));
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Push(index)));
             }
+            "POP" => {
+                unresolved.push(UnresolvedOpcode::Resolved(Opcode::Pop));
+            }
             "STORE_LOCAL" => {
                 let index_str = parts.next().expect("STORE_LOCAL needs an argument");
                 let index: usize = index_str.parse::<usize>().expect("Invalid constant index");

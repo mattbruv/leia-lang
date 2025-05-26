@@ -61,6 +61,11 @@ impl VM {
             */
 
             match code {
+                Opcode::Pop => {
+                    self.stack
+                        .pop()
+                        .expect("Attempted to pop a value where none exists!");
+                }
                 Opcode::Push(constant_index) => {
                     //println!("{:?}", self.program.constants);
                     //println!("push const: {:?}", constant_index);
@@ -119,11 +124,14 @@ impl VM {
                     break;
                 }
                 Opcode::JumpIfZero(addr) => {
-                    let val = self.stack.pop().unwrap();
+                    // we don't pop the value off the stack here when comparing.
+                    // This is to support logical operators where we don't want to pop the condition
+                    // See "jumping back and forth" chapter in Crafting interpreters
+                    let val = self.stack.last().unwrap(); // .pop().unwrap();
                     //println!("JUMP? {:?}", val);
                     match val {
                         LeiaValue::Int(x) => {
-                            if x == 0 {
+                            if *x == 0 {
                                 self.pc = addr - 1; // subtracting one because we add it right back after this
                             }
                         }
@@ -131,11 +139,11 @@ impl VM {
                     }
                 }
                 Opcode::JumpIfNotZero(addr) => {
-                    let val = self.stack.pop().unwrap();
+                    let val = self.stack.last().unwrap(); //.pop().unwrap();
                     //println!("JUMP? {:?}", val);
                     match val {
                         LeiaValue::Int(x) => {
-                            if x != 0 {
+                            if *x != 0 {
                                 self.pc = addr - 1; // subtracting one because we add it right back after this
                             }
                         }

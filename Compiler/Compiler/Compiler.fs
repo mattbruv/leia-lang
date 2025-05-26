@@ -123,7 +123,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             let label_end, env3 = getNextLabel env''
 
             leftEmit //
-            @ [ emit (jumpOp label_end) ]
+            @ [ emit (jumpOp label_end); emit Pop ]
             @ rightEmit
             @ [ Label label_end ],
             env3
@@ -182,6 +182,7 @@ let emittedToString emitted =
         let op =
             match opcode with
             | PushConstant i -> "PUSH_CONST " + i.ToString()
+            | Pop -> "POP"
             | Call s -> "CALL " + Label.value s
             | Return -> "RET"
             | Jump s -> "JUMP " + Label.value s

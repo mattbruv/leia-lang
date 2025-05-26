@@ -23,6 +23,7 @@
   LOAD_LOCAL 0           ; n
   SUB              ; counter - n
   JUMPZ end   ; if counter == n, end loop
+  POP
 
   LOAD_LOCAL 1           ; a
   LOAD_LOCAL 2           ; b

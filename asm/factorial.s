@@ -15,6 +15,7 @@
     PUSH_CONST 1
     SUB
     JUMPZ base_case  ; if n-1 == 0 -> base case
+    POP
 
     LOAD_LOCAL 0
     PUSH_CONST 1

@@ -13,6 +13,8 @@ pub struct ConstantIndex(pub u32);
 pub enum Opcode {
     Push(ConstantIndex), // push a constant value
 
+    Pop, // pop the top value off the stack and dispose of it
+
     Call(usize), // call a function
     Return,      // Return from a function
 

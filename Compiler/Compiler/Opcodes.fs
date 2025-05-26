@@ -8,6 +8,7 @@ module Label =
 type Opcode =
     //
     | PushConstant of int
+    | Pop
 
     | Call of Label
     | Return

@@ -10,6 +10,7 @@
     PUSH_CONST 2
     SUB
     JUMPZ end
+    POP
 
     ; check i % 3
     LOAD_LOCAL 0
@@ -26,8 +27,10 @@
     ; if (i % 3 == 0) || (i % 5 == 0)
     LOAD_LOCAL 2
     JUMPZ add_to_sum
+    POP
     LOAD_LOCAL 3
     JUMPZ add_to_sum
+    POP
     JUMP skip
 
 .add_to_sum

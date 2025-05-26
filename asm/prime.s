@@ -35,6 +35,7 @@
     PUSH_CONST 4
     EQ
     JUMPZ skip_mark_not_prime
+    POP
 
     PUSH_CONST 4       ; is_prime = 0
     STORE_LOCAL 3
@@ -48,6 +49,7 @@
     PUSH_CONST 3
     EQ
     JUMPZ skip_increment
+    POP
 
     INC 1 ; primes_found += 1
 
@@ -55,6 +57,7 @@
     PUSH_CONST 2
     EQ
     JUMPZ skip_print
+    POP
 
     LOAD_LOCAL 0       ; print candidate
     PRINT
