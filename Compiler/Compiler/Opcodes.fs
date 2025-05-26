@@ -1,15 +1,20 @@
 module Opcodes
 
+type Label = Label of string
+
+module Label =
+    let value (Label s) = s
+
 type Opcode =
     //
     | PushConstant of int
 
-    | Call of string
+    | Call of Label
     | Return
 
-    | Jump of string
-    | JumpIfZero of string
-    | JumpIfNotZero of string
+    | Jump of Label
+    | JumpIfZero of Label
+    | JumpIfNotZero of Label
 
     | LoadLocal of int
     | StoreLocal of int

@@ -11,7 +11,12 @@ type LocalMap = Map<string, int>
 type CompilerEnv =
     { locals: LocalMap
       constTable: ConstTable
-      nextSlot: int }
+      nextSlot: int
+      nextLabel: int }
+
+let getNextLabel env : Label * CompilerEnv =
+    let newLabel = env.nextLabel
+    Label("L" + newLabel.ToString()), { env with nextLabel = newLabel + 1 }
 
 let getOrAddLocal (env: CompilerEnv) (name: string) : int * CompilerEnv =
     match Map.tryFind name env.locals with
@@ -27,7 +32,7 @@ let getOrAddLocal (env: CompilerEnv) (name: string) : int * CompilerEnv =
 
 type Emitted =
     | Instruction of Opcode * string option
-    | Label of string
+    | Label of Label
     | Comment of string
 
 let emit opcode : Emitted = Instruction(opcode, None)
@@ -84,29 +89,40 @@ let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list * Co
         | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ], env
         | None -> failwith $"Literal not found in constant table: {literal}"
 
+let opEmit op =
+    match op with
+    | Multiply -> emit Mul
+    | Divide -> emit Div
+    | BinaryOp.Add -> emit Add
+    | Subtract -> emit Sub
+    | Modulo -> emit Mod
+    | GreaterThan -> emit Gt
+    | GreaterThanEqual -> emit Gte
+    | LessThan -> emit Lt
+    | LessThanEqual -> emit Lte
+    | NotEqual -> emit NotEq
+    | Equal -> emit Eq
+    | And
+    | Or -> failwith $"Should not be emitting instruction {op}"
+
 let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
     match e with
     | BinaryOp(op, left, right) ->
-        let leftInstrs, env' = compileExpression left env
-        let rightInstrs, env'' = compileExpression right env'
+        let leftEmit, env' = compileExpression left env
+        let rightEmit, env'' = compileExpression right env'
 
-        let opInstr =
-            match op with
-            | Multiply -> emit Mul
-            | Divide -> emit Div
-            | BinaryOp.Add -> emit Add
-            | Subtract -> emit Sub
-            | Modulo -> emit Mod
-            | GreaterThan -> emit Gt
-            | GreaterThanEqual -> emit Gte
-            | LessThan -> emit Lt
-            | LessThanEqual -> emit Lte
-            | NotEqual -> emit NotEq
-            | Equal -> emit Eq
-            | And
-            | Or -> failwith "Should not be emitting instructions for AND/OR"
+        match op with
+        | And
+        | Or ->
+            let jumpOp =
+                match op with
+                | And -> JumpIfZero
+                | Or -> JumpIfNotZero
+                | _ -> failwith "Unexpected logical op"
 
-        leftInstrs @ rightInstrs @ [ opInstr ], env''
+            let label_end, env3 = getNextLabel env''
+            leftEmit @ [ emit (jumpOp label_end) ] @ rightEmit @ [ Label label_end ], env3
+        | _ -> leftEmit @ rightEmit @ [ opEmit op ], env''
 
     | Literal literal -> compileLiteral literal env
     | Assignment(ident, expression) ->
@@ -154,17 +170,17 @@ let allLiterals (statements: Statement list) : Literal list =
 
 let emittedToString emitted =
     match emitted with
-    | Label s -> "." + s
+    | Label s -> "." + Label.value s
     | Comment s -> "; " + s
     | Instruction(opcode, stringOption) ->
         let op =
             match opcode with
             | PushConstant i -> "PUSH_CONST " + i.ToString()
-            | Call s -> "CALL " + s
+            | Call s -> "CALL " + Label.value s
             | Return -> "RET"
-            | Jump s -> "JUMP " + s
-            | JumpIfZero s -> "JUMPZ " + s
-            | JumpIfNotZero s -> "JUMPNZ " + s
+            | Jump s -> "JUMP " + Label.value s
+            | JumpIfZero s -> "JUMPZ " + Label.value s
+            | JumpIfNotZero s -> "JUMPNZ " + Label.value s
             | Add -> "ADD"
             | Sub -> "SUB"
             | Mul -> "MUL"
@@ -181,9 +197,11 @@ let emittedToString emitted =
             | Lt -> "LT"
             | Lte -> "LTE"
 
+        let prefix = "    "
+
         match stringOption with
-        | Some value -> op + " ; " + value
-        | None -> op
+        | Some value -> prefix + op + " ; " + value
+        | None -> prefix + op
 
 let compile (program: Statement list) : string =
     // printf "%A\n" program
@@ -193,7 +211,8 @@ let compile (program: Statement list) : string =
     let env: CompilerEnv =
         { locals = Map.empty
           constTable = constTable
-          nextSlot = 0 }
+          nextSlot = 0
+          nextLabel = 0 }
 
     let statements, _ =
         program
@@ -203,7 +222,7 @@ let compile (program: Statement list) : string =
                 (acc @ emitted, newEnv))
             ([], env)
 
-    let main = Label "main"
+    let main = Label(Label.Label "main")
     let halt = emit Halt
 
     let programEmitted: Emitted list = (main :: statements) @ [ halt ]
