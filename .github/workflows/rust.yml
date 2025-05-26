@@ -1,4 +1,4 @@
-name: Build and Test VM
+name: Build and Test Compiler & VM
 
 on:
   push:
@@ -15,8 +15,21 @@ jobs:
     timeout-minutes: 10 # Set a max job duration of 10 minutes
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Build
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x" # or 7.0.x depending on your compiler
+
+      - name: Restore and build compiler
+        run: |
+          cd Compiler/Compiler
+          dotnet restore
+          dotnet build --configuration Release
+
+      - name: Build Rust VM
         run: |
           cd vm
           cargo build --verbose
