@@ -68,7 +68,7 @@ impl Display for LeiaValue {
         match self {
             LeiaValue::Int(x) => write!(f, "{x}"),
             LeiaValue::Float(x) => write!(f, "{x}"),
-            LeiaValue::Str(x) => write!(f, "\"{x}\""),
+            LeiaValue::Str(x) => write!(f, "{x}"),
         }
     }
 }
