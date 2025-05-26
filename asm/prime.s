@@ -5,58 +5,58 @@
 .const 4 0       ; constant 0
 
 .main
-    PUSH 0       ; candidate = 2
-    STORE 0
+    PUSH_CONST 0       ; candidate = 2
+    STORE_LOCAL 0
 
-    PUSH 1       ; primes_found = 0
-    STORE 1
+    PUSH_CONST 1       ; primes_found = 0
+    STORE_LOCAL 1
 
 .loop_start
-    PUSH 0       ; divisor = 2
-    STORE 2
+    PUSH_CONST 0       ; divisor = 2
+    STORE_LOCAL 2
 
-    PUSH 3       ; is_prime = 1
-    STORE 3
+    PUSH_CONST 3       ; is_prime = 1
+    STORE_LOCAL 3
 
 .div_check
-    LOAD 2       ; divisor * divisor > candidate
-    LOAD 2
+    LOAD_LOCAL 2       ; divisor * divisor > candidate
+    LOAD_LOCAL 2
     MUL
-    LOAD 0
+    LOAD_LOCAL 0
     GT
     JUMPNZ done_checking
 
-    LOAD 0       ; candidate % divisor
-    LOAD 2
+    LOAD_LOCAL 0       ; candidate % divisor
+    LOAD_LOCAL 2
     MOD
-    STORE 4
+    STORE_LOCAL 4
 
-    LOAD 4       ; if mod_result == 0
-    PUSH 4
+    LOAD_LOCAL 4       ; if mod_result == 0
+    PUSH_CONST 4
     EQ
     JUMPZ skip_mark_not_prime
 
-    PUSH 4       ; is_prime = 0
-    STORE 3
+    PUSH_CONST 4       ; is_prime = 0
+    STORE_LOCAL 3
 
 .skip_mark_not_prime
     INC 2       ; divisor += 1
     JUMP div_check
 
 .done_checking
-    LOAD 3       ; if is_prime != 1, skip increment
-    PUSH 3
+    LOAD_LOCAL 3       ; if is_prime != 1, skip increment
+    PUSH_CONST 3
     EQ
     JUMPZ skip_increment
 
     INC 1 ; primes_found += 1
 
-    LOAD 1       ; if primes_found == 461
-    PUSH 2
+    LOAD_LOCAL 1       ; if primes_found == 461
+    PUSH_CONST 2
     EQ
     JUMPZ skip_print
 
-    LOAD 0       ; print candidate
+    LOAD_LOCAL 0       ; print candidate
     PRINT
     HALT
 

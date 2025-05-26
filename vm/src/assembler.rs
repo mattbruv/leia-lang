@@ -52,19 +52,19 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
         let instr = parts.next().unwrap();
 
         match instr {
-            "PUSH" => {
-                let index_str = parts.next().expect("PUSH needs an argument");
+            "PUSH_CONST" => {
+                let index_str = parts.next().expect("PUSH_CONST needs an argument");
                 let index: ConstantIndex =
                     ConstantIndex(index_str.parse::<u32>().expect("Invalid constant index"));
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Push(index)));
             }
-            "STORE" => {
-                let index_str = parts.next().expect("STORE needs an argument");
+            "STORE_LOCAL" => {
+                let index_str = parts.next().expect("STORE_LOCAL needs an argument");
                 let index: usize = index_str.parse::<usize>().expect("Invalid constant index");
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::StoreLocal(index)));
             }
-            "LOAD" => {
-                let index_str = parts.next().expect("LOAD needs an argument");
+            "LOAD_LOCAL" => {
+                let index_str = parts.next().expect("LOAD_LOCAL needs an argument");
                 let index: usize = index_str.parse::<usize>().expect("Invalid constant index");
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::LoadLocal(index)));
             }

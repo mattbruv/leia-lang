@@ -151,7 +151,7 @@ let emittedToString emitted =
     | Instruction(opcode, stringOption) ->
         let op =
             match opcode with
-            | PushConstant i -> "PUSH " + i.ToString()
+            | PushConstant i -> "PUSH_CONST " + i.ToString()
             | Call s -> "CALL " + s
             | Return -> "RET"
             | Jump s -> "JUMP " + s
@@ -166,8 +166,8 @@ let emittedToString emitted =
             | Mod -> "MOD"
             | Print -> "PRINT"
             | Halt -> "HALT"
-            | LoadLocal i -> "LOAD " + i.ToString()
-            | StoreLocal i -> "STORE " + i.ToString()
+            | LoadLocal i -> "LOAD_LOCAL " + i.ToString()
+            | StoreLocal i -> "STORE_LOCAL " + i.ToString()
 
         match stringOption with
         | Some value -> op + " ; " + value

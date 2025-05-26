@@ -1,47 +1,47 @@
 .main
-    PUSH 0       ; i = 0
-    STORE 0
+    PUSH_CONST 0       ; i = 0
+    STORE_LOCAL 0
 
-    PUSH 1       ; sum = 0
-    STORE 1
+    PUSH_CONST 1       ; sum = 0
+    STORE_LOCAL 1
 
 .loop
-    LOAD 0       ; if i >= 1000
-    PUSH 2
+    LOAD_LOCAL 0       ; if i >= 1000
+    PUSH_CONST 2
     SUB
     JUMPZ end
 
     ; check i % 3
-    LOAD 0
-    PUSH 3
+    LOAD_LOCAL 0
+    PUSH_CONST 3
     MOD
-    STORE 2
+    STORE_LOCAL 2
 
     ; check i % 5
-    LOAD 0
-    PUSH 4
+    LOAD_LOCAL 0
+    PUSH_CONST 4
     MOD
-    STORE 3
+    STORE_LOCAL 3
 
     ; if (i % 3 == 0) || (i % 5 == 0)
-    LOAD 2
+    LOAD_LOCAL 2
     JUMPZ add_to_sum
-    LOAD 3
+    LOAD_LOCAL 3
     JUMPZ add_to_sum
     JUMP skip
 
 .add_to_sum
-    LOAD 1        ; sum += i
-    LOAD 0
+    LOAD_LOCAL 1        ; sum += i
+    LOAD_LOCAL 0
     ADD
-    STORE 1
+    STORE_LOCAL 1
 
 .skip
     INC 0
     JUMP loop
 
 .end
-    LOAD 1
+    LOAD_LOCAL 1
     PRINT
     HALT
 

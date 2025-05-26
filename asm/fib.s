@@ -6,46 +6,46 @@
 .const 3 2         ; counter starts at 2
 
 .main
-  PUSH 0           ; load n
-  STORE 0
+  PUSH_CONST 0           ; load n
+  STORE_LOCAL 0
 
-  PUSH 1           ; a = 0
-  STORE 1
+  PUSH_CONST 1           ; a = 0
+  STORE_LOCAL 1
 
-  PUSH 2           ; b = 1
-  STORE 2
+  PUSH_CONST 2           ; b = 1
+  STORE_LOCAL 2
 
-  PUSH 3           ; counter = 2
-  STORE 3
+  PUSH_CONST 3           ; counter = 2
+  STORE_LOCAL 3
 
 .loop_start
-  LOAD 3           ; counter
-  LOAD 0           ; n
+  LOAD_LOCAL 3           ; counter
+  LOAD_LOCAL 0           ; n
   SUB              ; counter - n
   JUMPZ end   ; if counter == n, end loop
 
-  LOAD 1           ; a
-  LOAD 2           ; b
+  LOAD_LOCAL 1           ; a
+  LOAD_LOCAL 2           ; b
   ADD              ; a + b
-  STORE 4          ; temp = a + b
+  STORE_LOCAL 4          ; temp = a + b
 
-  LOAD 2
-  STORE 1          ; a = b
+  LOAD_LOCAL 2
+  STORE_LOCAL 1          ; a = b
   
-  LOAD 2
+  LOAD_LOCAL 2
   PRINT
 
-  LOAD 4
-  STORE 2          ; b = temp
+  LOAD_LOCAL 4
+  STORE_LOCAL 2          ; b = temp
 
-  LOAD 3
-  PUSH 2
+  LOAD_LOCAL 3
+  PUSH_CONST 2
   ADD
-  STORE 3          ; counter += 1
+  STORE_LOCAL 3          ; counter += 1
 
   JUMP loop_start
 
 .end
-  LOAD 2           ; result is in b
+  LOAD_LOCAL 2           ; result is in b
   PRINT
   HALT

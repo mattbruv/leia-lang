@@ -2,14 +2,14 @@
 .const 1 2      ; Constant multiplier
 
 .main
-    PUSH 0      ; Push 21
+    PUSH_CONST 0      ; Push 21
     CALL double
     HALT
 
 .double
-    STORE 0     ; Store input into local[0]
-    LOAD 0      ; Load local[0]
-    PUSH 1      ; Push 2
+    STORE_LOCAL 0     ; Store input into local[0]
+    LOAD_LOCAL 0      ; Load local[0]
+    PUSH_CONST 1      ; Push 2
     MUL         ; Multiply local[0] * 2
     PRINT       ; Print result
     RET
