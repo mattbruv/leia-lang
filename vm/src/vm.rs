@@ -151,7 +151,10 @@ impl VM {
                     self.stack.push(val);
                 }
                 Opcode::StoreLocal(idx) => {
-                    let val = self.stack.pop().expect("Stack underflow on StoreLocal");
+                    let val = self
+                        .stack
+                        .pop()
+                        .expect(format!("Stack underflow on StoreLocal index {}", idx).as_str());
 
                     if idx == self.locals_mut().len() {
                         // Append the new local since it's exactly the next index

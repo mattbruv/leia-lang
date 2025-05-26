@@ -10,7 +10,20 @@ type LocalMap = Map<string, int>
 
 type CompilerEnv =
     { locals: LocalMap
-      constTable: ConstTable }
+      constTable: ConstTable
+      nextSlot: int }
+
+let getOrAddLocal (env: CompilerEnv) (name: string) : int * CompilerEnv =
+    match Map.tryFind name env.locals with
+    | Some index -> index, env
+    | None ->
+        let newIndex = env.nextSlot
+        let updatedLocals = Map.add name newIndex env.locals
+
+        newIndex,
+        { env with
+            locals = updatedLocals
+            nextSlot = newIndex + 1 }
 
 type Emitted =
     | Instruction of Opcode * string option
@@ -46,12 +59,6 @@ let collectConstantsFromList (lits: Literal list) =
     lits |> List.iter (collectConstants constants)
     constants
 
-let collectLocalsFromList (lits: Literal list) =
-    let constants = HashSet()
-    lits |> List.iter (collectLiterals constants)
-    constants
-
-
 let buildConstantTable (constants: seq<Literal>) : ConstTable =
     constants |> Seq.mapi (fun idx lit -> idx, lit) |> dict
 
@@ -61,12 +68,12 @@ let buildLocalsTable (locals: seq<string>) : LocalMap =
 let getLocal env ident =
     env.locals |> Seq.tryFind (fun kvp -> kvp.Key = ident) |> Option.map id
 
-let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
+let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list * CompilerEnv =
 
     match literal with
     | Identifier ident ->
         match getLocal env ident with
-        | Some entry -> [ emitWithComment (LoadLocal entry.Value, Some entry.Key) ]
+        | Some entry -> [ emitWithComment (LoadLocal entry.Value, Some entry.Key) ], env
         | None -> failwith $"Identifier not found in table: {ident}"
 
     | _ ->
@@ -74,14 +81,14 @@ let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list =
             env.constTable |> Seq.tryFind (fun kvp -> kvp.Value = literal) |> Option.map id
 
         match maybeEntry with
-        | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ]
+        | Some entry -> [ emitWithComment ((PushConstant entry.Key), Some(formatLiteral entry.Value)) ], env
         | None -> failwith $"Literal not found in constant table: {literal}"
 
-let rec compileExpression e (env: CompilerEnv) : Emitted list =
+let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
     match e with
     | BinaryOp(op, left, right) ->
-        let leftInstrs = compileExpression left env
-        let rightInstrs = compileExpression right env
+        let leftInstrs, env' = compileExpression left env
+        let rightInstrs, env'' = compileExpression right env'
 
         let opInstr =
             match op with
@@ -91,34 +98,36 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list =
             | Subtract -> emit Sub
             | Modulo -> emit Mod
 
-        leftInstrs @ rightInstrs @ [ opInstr ]
+        leftInstrs @ rightInstrs @ [ opInstr ], env''
 
     | Literal literal -> compileLiteral literal env
     | Assignment(ident, expression) ->
-        match getLocal env ident with
-        | Some kv ->
-            let out = compileExpression expression env
+        let exprInstrs, env' = compileExpression expression env
+        let slot, env'' = getOrAddLocal env' ident
 
-            let doPop =
-                match expression with
-                | Assignment(s, _expr) ->
-                    match getLocal env s with
-                    | None -> []
-                    | Some value -> [ emitWithComment (LoadLocal value.Value, Some $"load {s} again") ]
-                | _ -> []
+        let instrs =
+            let store = [ emitWithComment (StoreLocal slot, Some $"{ident}") ]
 
-            out @ doPop @ [ emitWithComment ((StoreLocal kv.Value), Some $"{kv.Key}") ]
-        | None -> failwith $"Identifier not found in table: {ident}"
+            match expression with
+            // If we are assigning something which was previously assigned, emit a load so it's on the stack again when we pull it.
+            | Assignment(s, _) ->
+                let childIdx, _ = getOrAddLocal env'' s
+                let load = [ emitWithComment (LoadLocal childIdx, Some $"load {s} again") ]
+                exprInstrs @ load @ store
+            // otherwise, just store it
+            | _ -> exprInstrs @ store
 
+        instrs, env''
 
-let compileStatement (statement: Statement) env : Emitted list =
+let compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
     match statement with
-    | Statement.Print e -> (compileExpression e env) @ [ emit Print ]
+    | Statement.Print e ->
+        let exprInstrs, env' = (compileExpression e env)
+        exprInstrs @ [ emit Print ], env'
     | Statement.Expr e -> (compileExpression e env)
 
 let constTableToString (constTable: ConstTable) : string =
     constTable
-    //
     |> Seq.map (fun kvp -> $".const {kvp.Key} {(formatLiteral kvp.Value)}")
     |> String.concat "\n"
 
@@ -168,13 +177,19 @@ let compile (program: Statement list) : string =
     // printf "%A\n" program
     let literals = allLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
-    let locals = buildLocalsTable (collectLocalsFromList literals)
 
     let env: CompilerEnv =
-        { locals = locals
-          constTable = constTable }
+        { locals = Map.empty
+          constTable = constTable
+          nextSlot = 0 }
 
-    let statements = program |> List.collect (fun x -> (compileStatement x env))
+    let statements, _ =
+        program
+        |> List.fold
+            (fun (acc, currentEnv) stmt ->
+                let emitted, newEnv = compileStatement stmt currentEnv
+                (acc @ emitted, newEnv))
+            ([], env)
 
     let main = Label "main"
     let halt = emit Halt
