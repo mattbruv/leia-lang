@@ -1,0 +1,4 @@
+
+
+x = y = z = 3 * 3
+print y + z + x
