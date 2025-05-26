@@ -176,6 +176,21 @@ impl VM {
                     let a = self.stack.pop().unwrap();
                     self.stack.push(a.gt(b));
                 }
+                Opcode::GreaterThanEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.gte(b));
+                }
+                Opcode::LessThan => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.lt(b));
+                }
+                Opcode::LessThanEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.lte(b));
+                }
                 Opcode::Call(fn_address) => {
                     // probably need to push a new stack frame
                     let frame = StackFrame {

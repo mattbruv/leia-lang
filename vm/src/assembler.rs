@@ -81,6 +81,9 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
                 unresolved.push(UnresolvedOpcode::Resolved(Opcode::Increment(index)));
             }
             "GT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::GreaterThan)),
+            "GTE" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::GreaterThanEqual)),
+            "LT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::LessThan)),
+            "LTE" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::LessThanEqual)),
             "HALT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Halt)),
             "JUMP" => {
                 let label = parts.next().expect("JUMP needs a label").to_string();
