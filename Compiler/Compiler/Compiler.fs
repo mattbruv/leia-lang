@@ -103,6 +103,8 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             | LessThanEqual -> emit Lte
             | NotEqual -> emit NotEq
             | Equal -> emit Eq
+            | And
+            | Or -> failwith "Should not be emitting instructions for AND/OR"
 
         leftInstrs @ rightInstrs @ [ opInstr ], env''
 

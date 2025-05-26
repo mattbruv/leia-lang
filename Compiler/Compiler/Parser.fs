@@ -450,6 +450,38 @@ let pequality: Parser<Expression> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
+let plogic_and: Parser<Expression> =
+    let operator = (pstring "&&")
+
+    let opAndEquality = whitespace >>. operator .>> whitespace .>>. pequality
+
+    pequality .>>. many opAndEquality
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | "&&" -> BinaryOp(And, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
+
+
+let plogic_or: Parser<Expression> =
+    let operator = (pstring "||")
+
+    let opAndAnd = whitespace >>. operator .>> whitespace .>>. plogic_and
+
+    plogic_and .>>. many opAndAnd
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | "||" -> BinaryOp(Or, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
 
 let passignment: Parser<Expression> =
     let passign =
@@ -459,7 +491,7 @@ let passignment: Parser<Expression> =
             | Identifier s -> Assignment(s, expr)
             | _ -> failwith "Must assign to an identifier"
 
-    passign <|> pequality
+    passign <|> plogic_or
 
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print

@@ -15,6 +15,9 @@ type BinaryOp =
     | NotEqual
     | Equal
 
+    | And
+    | Or
+
 type Literal =
     | Int of int
     | Float of float
