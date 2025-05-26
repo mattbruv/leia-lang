@@ -121,7 +121,13 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
                 | _ -> failwith "Unexpected logical op"
 
             let label_end, env3 = getNextLabel env''
-            leftEmit @ [ emit (jumpOp label_end) ] @ rightEmit @ [ Label label_end ], env3
+
+            leftEmit //
+            @ [ emit (jumpOp label_end) ]
+            @ rightEmit
+            @ [ Label label_end ],
+            env3
+
         | _ -> leftEmit @ rightEmit @ [ opEmit op ], env''
 
     | Literal literal -> compileLiteral literal env
