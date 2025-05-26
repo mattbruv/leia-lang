@@ -63,4 +63,12 @@ mod tests {
         let val = run_asm_test("../asm/factorial.s");
         assert_eq!("362880", val.last().unwrap());
     }
+
+    #[test]
+    fn test_comparisons() {
+        let val = run_asm_test("../asm/compare.s");
+        let seven: Vec<bool> = val.iter().take(7).map(|x| x == "1").collect();
+
+        assert_eq!(vec![true, false, true, false, false, true, false], seven);
+    }
 }
