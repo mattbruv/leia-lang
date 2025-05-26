@@ -10,10 +10,10 @@
         <Compile Include="Opcodes.fs"/>
         <Compile Include="Parser.fs"/>
         <Compile Include="Compiler.fs"/>
-        <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Include="Program.fs"/>
         <Content Include="examples\syntax.leia">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>

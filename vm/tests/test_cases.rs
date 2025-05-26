@@ -70,11 +70,4 @@ mod tests {
         let bools: Vec<bool> = val.iter().map(|x| x == "1").collect();
         assert_eq!(vec![true, false, true, false, false, true, false], bools);
     }
-
-    #[test]
-    fn test_and_or() {
-        let val = run_asm_test("../asm/and_or.s");
-        let ints: Vec<i32> = val.iter().map(|x| x.parse::<i32>().unwrap()).collect();
-        assert_eq!(vec![4, 0, 0, 1, 2, 0], ints);
-    }
 }

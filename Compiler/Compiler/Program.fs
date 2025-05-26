@@ -1,12 +1,38 @@
 ﻿module Program
 
+open System
 open System.IO
 open Parser
 open Compiler
 
-let contents = File.ReadAllText("examples/add.leia")
-let result = run program contents
+let writeOutput outputPath programText =
+    match outputPath with
+    | Some path -> File.WriteAllText(path, programText)
+    | None ->
+        Console.OutputEncoding <- System.Text.Encoding.UTF8
+        printf $"%s{programText}"
 
-match result with
-| Success(literals, _) -> printfn $"%s{compile literals}"
-| Failure(s, s1, parserPosition) -> printResult result
+[<EntryPoint>]
+let main argv =
+    match argv with
+    | [| inputPath |] ->
+        let source = File.ReadAllText(inputPath)
+
+        match run program source with
+        | Success(literals, _) ->
+            let program = $"%s{compile literals}"
+            writeOutput None program
+            0
+        | Failure _ -> 1
+    | [| inputPath; outputPath |] ->
+        let source = File.ReadAllText(inputPath)
+
+        match run program source with
+        | Success(literals, _) ->
+            let program = $"%s{compile literals}"
+            writeOutput (Some outputPath) program
+            0
+        | Failure _ -> 1
+    | _ ->
+        eprintfn "Usage: compiler.exe <input> [output]"
+        1
