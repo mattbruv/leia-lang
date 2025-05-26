@@ -2,7 +2,7 @@ use std::{cell::RefCell, fs, rc::Rc};
 use vm::{assembler::parse_assembly, vm::VM};
 
 fn compile_and_run(name: &str) -> Vec<String> {
-    let compiler_proj = "../compiler/Compiler/Compiler.fsproj";
+    let compiler_proj = "../Compiler/Compiler/Compiler.fsproj";
     let src_path = format!("../tests/src/{}.leia", name);
     let out_path = format!("../tests/out/{}.asm", name);
 
@@ -11,11 +11,13 @@ fn compile_and_run(name: &str) -> Vec<String> {
         .output()
         .expect("Failed to run compiler");
 
+    println!("cwd = {:?}", std::env::current_dir().unwrap());
     if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
         panic!(
-            "Compiler error on {}:\n{}",
-            name,
-            String::from_utf8_lossy(&output.stderr)
+            "Compiler failed on '{}'\nExit status: {:?}\n--- stderr ---\n{}\n--- stdout ---\n{}",
+            src_path, output.status, stderr, stdout
         );
     }
 
