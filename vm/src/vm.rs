@@ -171,6 +171,11 @@ impl VM {
                     let a = self.stack.pop().unwrap();
                     self.stack.push(a.eq(b));
                 }
+                Opcode::NotEqual => {
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(a.neq(b));
+                }
                 Opcode::GreaterThan => {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();

@@ -25,6 +25,7 @@ pub enum Opcode {
     Increment(usize),
 
     Equals,
+    NotEqual,
     GreaterThan,
     GreaterThanEqual,
     LessThan,
@@ -118,5 +119,6 @@ impl LeiaValue {
     impl_cmp_op!(lte, <=, "Invalid types for less-than-equal comparison");
     impl_cmp_op!(gte, >=, "Invalid types for greater-than-equal comparison");
     impl_cmp_op!(eq, ==, "Invalid types for equality comparison");
+    impl_cmp_op!(neq, !=, "Invalid types for equality comparison");
     impl_cmp_op!(ne, !=, "Invalid types for inequality comparison");
 }

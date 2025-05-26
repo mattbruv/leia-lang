@@ -7,6 +7,14 @@ type BinaryOp =
     | Add
     | Subtract
 
+    | GreaterThan
+    | GreaterThanEqual
+    | LessThan
+    | LessThanEqual
+
+    | NotEqual
+    | Equal
+
 type Literal =
     | Int of int
     | Float of float

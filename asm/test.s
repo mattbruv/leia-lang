@@ -1,18 +1,10 @@
-.const 0 3
+.const 0 100
 
 .main
-PUSH_CONST 0 ; 3
-PUSH_CONST 0 ; 3
-MUL
+PUSH_CONST 0 ; 100
 STORE_LOCAL 0 ; x
-LOAD_LOCAL 0 ; load x again
-STORE_LOCAL 1 ; z
-LOAD_LOCAL 1 ; load z again
-STORE_LOCAL 2 ; y
 LOAD_LOCAL 0 ; x
-LOAD_LOCAL 2 ; y
-ADD
-LOAD_LOCAL 1 ; z
-ADD
+PUSH_CONST 0 ; 100
+EQ
 PRINT
 HALT

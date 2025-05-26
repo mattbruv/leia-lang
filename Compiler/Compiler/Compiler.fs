@@ -97,6 +97,12 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             | BinaryOp.Add -> emit Add
             | Subtract -> emit Sub
             | Modulo -> emit Mod
+            | GreaterThan -> emit Gt
+            | GreaterThanEqual -> emit Gte
+            | LessThan -> emit Lt
+            | LessThanEqual -> emit Lte
+            | NotEqual -> emit NotEq
+            | Equal -> emit Eq
 
         leftInstrs @ rightInstrs @ [ opInstr ], env''
 
@@ -157,8 +163,6 @@ let emittedToString emitted =
             | Jump s -> "JUMP " + s
             | JumpIfZero s -> "JUMPZ " + s
             | JumpIfNotZero s -> "JUMPNZ " + s
-            | Equals -> "EQ"
-            | GreaterThan -> "GT"
             | Add -> "ADD"
             | Sub -> "SUB"
             | Mul -> "MUL"
@@ -168,6 +172,12 @@ let emittedToString emitted =
             | Halt -> "HALT"
             | LoadLocal i -> "LOAD_LOCAL " + i.ToString()
             | StoreLocal i -> "STORE_LOCAL " + i.ToString()
+            | Eq -> "EQ"
+            | NotEq -> "NEQ"
+            | Gt -> "GT"
+            | Gte -> "GTE"
+            | Lt -> "LT"
+            | Lte -> "LTE"
 
         match stringOption with
         | Some value -> op + " ; " + value

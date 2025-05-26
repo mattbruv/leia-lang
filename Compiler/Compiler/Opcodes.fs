@@ -14,8 +14,12 @@ type Opcode =
     | LoadLocal of int
     | StoreLocal of int
 
-    | Equals
-    | GreaterThan
+    | Eq
+    | NotEq
+    | Gt
+    | Gte
+    | Lt
+    | Lte
 
     | Add
     | Sub

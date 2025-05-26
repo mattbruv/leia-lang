@@ -75,6 +75,7 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
             "MOD" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Modulo)),
             "PRINT" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Print)),
             "EQ" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::Equals)),
+            "NEQ" => unresolved.push(UnresolvedOpcode::Resolved(Opcode::NotEqual)),
             "INC" => {
                 let index_str = parts.next().expect("INC needs an argument");
                 let index: usize = index_str.parse::<usize>().expect("Invalid constant index");

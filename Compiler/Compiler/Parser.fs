@@ -413,6 +413,44 @@ let pterm: Parser<Expression> =
                 | _ -> failwith $"Unexpected operator: {op}")
             first
 
+let pcomparison: Parser<Expression> =
+    let operator = (pstring "<=") <|> (pstring ">=") <|> (pstring "<") <|> (pstring ">")
+
+    let opAndTerm = whitespace >>. operator .>> whitespace .>>. pterm
+
+    pterm .>>. many opAndTerm
+
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | "<" -> BinaryOp(LessThan, acc, next)
+                | "<=" -> BinaryOp(LessThanEqual, acc, next)
+                | ">" -> BinaryOp(GreaterThan, acc, next)
+                | ">=" -> BinaryOp(GreaterThanEqual, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
+
+let pequality: Parser<Expression> =
+    let operator = (pstring "==") <|> (pstring "!=")
+
+    let opAndComparison = whitespace >>. operator .>> whitespace .>>. pcomparison
+
+    pcomparison .>>. many opAndComparison
+    |>> fun (first, rest) ->
+        // fold the list into a binary operation chain
+        rest
+        |> List.fold
+            (fun acc (op, next) ->
+                match op with
+                | "==" -> BinaryOp(Equal, acc, next)
+                | "!=" -> BinaryOp(NotEqual, acc, next)
+                | _ -> failwith $"Unexpected operator: {op}")
+            first
+
+
 let passignment: Parser<Expression> =
     let passign =
         pidentifier .>> (whitespace >>. (pchar '=') .>> whitespace) .>>. pexpression
@@ -421,7 +459,7 @@ let passignment: Parser<Expression> =
             | Identifier s -> Assignment(s, expr)
             | _ -> failwith "Must assign to an identifier"
 
-    passign <|> pterm
+    passign <|> pequality
 
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
