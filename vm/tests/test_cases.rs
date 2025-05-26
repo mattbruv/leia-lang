@@ -67,8 +67,14 @@ mod tests {
     #[test]
     fn test_comparisons() {
         let val = run_asm_test("../asm/compare.s");
-        let seven: Vec<bool> = val.iter().take(7).map(|x| x == "1").collect();
+        let bools: Vec<bool> = val.iter().map(|x| x == "1").collect();
+        assert_eq!(vec![true, false, true, false, false, true, false], bools);
+    }
 
-        assert_eq!(vec![true, false, true, false, false, true, false], seven);
+    #[test]
+    fn test_and_or() {
+        let val = run_asm_test("../asm/and_or.s");
+        let ints: Vec<i32> = val.iter().map(|x| x.parse::<i32>().unwrap()).collect();
+        assert_eq!(vec![4, 0, 0, 1, 2, 0], ints);
     }
 }
