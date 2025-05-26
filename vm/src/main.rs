@@ -4,7 +4,7 @@ use vm::assembler::parse_assembly;
 use vm::vm::VM;
 
 fn main() {
-    let asm_text = include_str!("../../asm/test.s");
+    let asm_text = include_str!("../../test.asm");
     let asm = parse_assembly(asm_text);
     let mut vm = VM::new(asm);
     let start = Instant::now();
