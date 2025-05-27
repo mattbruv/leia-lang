@@ -29,6 +29,7 @@ let main argv =
 
         match run program source with
         | Success(literals, _) ->
+            //printfn "%A" literals
             let program = $"%s{compile literals}"
             writeOutput (Some outputPath) program
             0

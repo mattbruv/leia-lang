@@ -149,12 +149,35 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
 
         instrs, env''
 
-let compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
+let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
+    match declaration with
+    | Function -> failwith "todo"
+    | Statement statement -> compileStatement statement env
+
+and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
     match statement with
     | Statement.Print e ->
         let exprInstrs, env' = (compileExpression e env)
         exprInstrs @ [ emit Print ], env'
     | Statement.Expr e -> (compileExpression e env)
+    | If(condition, body) ->
+        // if the expression is false, jump to end
+        let endBlockLabel, env2 = getNextLabel env
+        let conditionInstrs, env3 = compileExpression condition env2
+        let bodyInstrs, env4 = compileStatement body env3
+
+        conditionInstrs
+        @ [ emit (JumpIfZero endBlockLabel) ]
+        @ bodyInstrs
+        @ [ Label endBlockLabel ],
+        env4
+    | Block declarations ->
+        declarations
+        |> List.fold
+            (fun (acc, currentEnv) decl ->
+                let emitted, newEnv = compileDeclaration decl currentEnv
+                (acc @ emitted, newEnv))
+            ([], env)
 
 let constTableToString (constTable: ConstTable) : string =
     constTable
@@ -167,12 +190,17 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
     | BinaryOp(_, left, right) -> [ left; right ] |> List.collect allExpressionLiterals
     | Assignment(_, expression) -> allExpressionLiterals expression
 
-let allLiterals (statements: Statement list) : Literal list =
-    statements
-    |> List.collect (fun l ->
-        match l with
-        | Statement.Print e -> allExpressionLiterals e
-        | Statement.Expr e -> allExpressionLiterals e)
+let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
+    match declaration with
+    | Function -> failwith "todo"
+    | Statement statement -> allStatementLiterals statement
+
+and allStatementLiterals (statement: Statement) : Literal list =
+    match statement with
+    | Statement.Print e -> allExpressionLiterals e
+    | Statement.Expr e -> allExpressionLiterals e
+    | If(e, block) -> allExpressionLiterals e @ allStatementLiterals block
+    | Block declarations -> List.collect allDeclarationLiterals declarations
 
 let emittedToString emitted =
     match emitted with
@@ -212,7 +240,7 @@ let emittedToString emitted =
 
 let compile (program: Statement list) : string =
     // printf "%A\n" program
-    let literals = allLiterals program
+    let literals = List.collect allStatementLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
     let env: CompilerEnv =

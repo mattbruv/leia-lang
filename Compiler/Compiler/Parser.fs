@@ -367,6 +367,7 @@ let createParserForwardedToRef<'a> () =
 
 
 let pexpression, pexpressionRef = createParserForwardedToRef<Expression> ()
+let pdeclaration, pdeclarationRef = createParserForwardedToRef<Declaration> ()
 
 let pgrouping =
     between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
@@ -495,12 +496,28 @@ let passignment: Parser<Expression> =
 
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
+
+
+    let block =
+        (pchar '{') >>. (whitespace >>. many pdeclaration .>> whitespace)
+        .>> (pchar '}')
+        |>> Block
+
+    let ifStatement: Parser<Statement> =
+        (between whitespace (pstring "if") whitespace)
+        >>. (between whitespace (pchar '(') whitespace)
+        >>. pexpression
+        .>> (between whitespace (pchar ')') whitespace)
+        .>>. block
+        |>> If
+
     let exprStatement = pexpression |>> Expr
 
-    choice [ printStatement; exprStatement ]
+    choice [ printStatement; ifStatement; block; exprStatement ]
 
 
 pexpressionRef.Value <- passignment
+pdeclarationRef.Value <- (pstatement |>> Declaration.Statement)
 
 let program =
     many whitespaceChar >>. sepBy1 pstatement whitespace1

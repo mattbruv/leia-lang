@@ -30,10 +30,13 @@ type Expression =
     | BinaryOp of BinaryOp * Expression * Expression
     | Assignment of string * Expression
 
-type Statement =
+type Declaration =
+    | Function
+    | Statement of Statement
+
+and Statement =
     //
     | Print of Expression
+    | If of Expression * Statement
+    | Block of Declaration list
     | Expr of Expression
-
-
-// a parser of a literal should be one of pint, pstring, or pbool

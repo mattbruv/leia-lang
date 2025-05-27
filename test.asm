@@ -1,15 +1,15 @@
-.const 0 1
+.const 0 0
 .const 1 2
-.const 2 3
-.const 3 4
+.const 2 "hi mom"
 
 .main
-    PUSH_CONST 0 ; 1
+    PUSH_CONST 0 ; 0
+    STORE_LOCAL 0 ; x
     PUSH_CONST 1 ; 2
-    ADD
-    PUSH_CONST 2 ; 3
-    ADD
-    PUSH_CONST 3 ; 4
-    ADD
+    LOAD_LOCAL 0 ; x
+    GT
+    JUMPZ L0
+    PUSH_CONST 2 ; "hi mom"
     PRINT
+.L0
     HALT
