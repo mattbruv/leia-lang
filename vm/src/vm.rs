@@ -1,3 +1,5 @@
+use std::thread::panicking;
+
 use crate::instruction::{ConstantValue, LeiaValue, Opcode, Program};
 
 type OutputHandler = Box<dyn FnMut(&LeiaValue)>;
@@ -121,6 +123,9 @@ impl VM {
                     }
                 }
                 Opcode::Halt => {
+                    if (self.stack.len()) > 0 {
+                        //panic!("Stack length is not zero!: {}", self.stack.len());
+                    }
                     break;
                 }
                 Opcode::JumpIfZero(addr) => {

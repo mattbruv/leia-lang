@@ -174,9 +174,11 @@ and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
 
         conditionInstrs
         @ [ emit (JumpIfZero elseStart) ] // Jump past if block if expression was false
+        @ [ emit Pop ] // pop if condition
         @ bodyInstrs // If block
         @ [ emit (Jump ifElseEnd) ] // We have already run the If block, so jump past else
         @ [ Label elseStart ]
+        @ [ emit Pop ] // pop if condition
         @ elseInstrs // Else block
         @ [ Label ifElseEnd ], // End of if statement
         env5

@@ -1,0 +1,7 @@
+x = 2
+
+if (x > 100) {
+    print "unreachable"
+}
+
+print "post if"
