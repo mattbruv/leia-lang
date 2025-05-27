@@ -49,4 +49,5 @@
 .end
   LOAD_LOCAL 2           ; result is in b
   PRINT
+  POP
   HALT

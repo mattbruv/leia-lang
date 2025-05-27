@@ -6,6 +6,7 @@
     PUSH_CONST 0         ; Push constant 5
     CALL factorial
     PRINT
+    POP
     HALT
 
 .factorial

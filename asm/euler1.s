@@ -34,6 +34,7 @@
     JUMP skip
 
 .add_to_sum
+    POP
     LOAD_LOCAL 1        ; sum += i
     LOAD_LOCAL 0
     ADD
@@ -44,6 +45,7 @@
     JUMP loop
 
 .end
+    POP
     LOAD_LOCAL 1
     PRINT
     HALT
