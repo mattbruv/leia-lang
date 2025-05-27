@@ -25,6 +25,7 @@
     LOAD_LOCAL 0
     GT
     JUMPNZ done_checking
+    POP
 
     LOAD_LOCAL 0       ; candidate % divisor
     LOAD_LOCAL 2
@@ -39,12 +40,16 @@
 
     PUSH_CONST 4       ; is_prime = 0
     STORE_LOCAL 3
+    JUMP foo
 
 .skip_mark_not_prime
+    POP
+.foo
     INC 2       ; divisor += 1
     JUMP div_check
 
 .done_checking
+    POP
     LOAD_LOCAL 3       ; if is_prime != 1, skip increment
     PUSH_CONST 3
     EQ
@@ -65,5 +70,6 @@
 
 .skip_print
 .skip_increment
+    POP
     INC 0 ; candidate += 1
     JUMP loop_start
