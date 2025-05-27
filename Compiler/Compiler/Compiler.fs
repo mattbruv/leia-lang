@@ -160,17 +160,27 @@ and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
         let exprInstrs, env' = (compileExpression e env)
         exprInstrs @ [ emit Print ], env'
     | Statement.Expr e -> (compileExpression e env)
-    | If(condition, body) ->
+    | If(condition, ifBody, elseBody) ->
         // if the expression is false, jump to end
-        let endBlockLabel, env2 = getNextLabel env
+        let elseStart, env2 = getNextLabel env
+        let ifElseEnd, env2 = getNextLabel env2
         let conditionInstrs, env3 = compileExpression condition env2
-        let bodyInstrs, env4 = compileStatement body env3
+        let bodyInstrs, env4 = compileStatement ifBody env3
+
+        let elseInstrs, env5 =
+            match elseBody with
+            | Some elseStatement -> compileStatement elseStatement env4
+            | None -> [], env4
 
         conditionInstrs
-        @ [ emit (JumpIfZero endBlockLabel) ]
-        @ bodyInstrs
-        @ [ Label endBlockLabel ],
-        env4
+        @ [ emit (JumpIfZero elseStart) ] // Jump past if block if expression was false
+        @ bodyInstrs // If block
+        @ [ emit (Jump ifElseEnd) ] // We have already run the If block, so jump past else
+        @ [ Label elseStart ]
+        @ elseInstrs // Else block
+        @ [ Label ifElseEnd ], // End of if statement
+        env5
+
     | Block declarations ->
         declarations
         |> List.fold
@@ -199,7 +209,13 @@ and allStatementLiterals (statement: Statement) : Literal list =
     match statement with
     | Statement.Print e -> allExpressionLiterals e
     | Statement.Expr e -> allExpressionLiterals e
-    | If(e, block) -> allExpressionLiterals e @ allStatementLiterals block
+    | If(e, ifBlock, elseBlock) ->
+        let maybeElse =
+            match elseBlock with
+            | Some value -> allStatementLiterals value
+            | None -> []
+
+        allExpressionLiterals e @ allStatementLiterals ifBlock @ maybeElse
     | Block declarations -> List.collect allDeclarationLiterals declarations
 
 let emittedToString emitted =

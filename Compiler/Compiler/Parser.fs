@@ -503,13 +503,19 @@ let pstatement: Parser<Statement> =
         .>> (pchar '}')
         |>> Block
 
-    let ifStatement: Parser<Statement> =
+    let pif =
         (between whitespace (pstring "if") whitespace)
         >>. (between whitespace (pchar '(') whitespace)
         >>. pexpression
         .>> (between whitespace (pchar ')') whitespace)
         .>>. block
-        |>> If
+
+    let pelse: Parser<Statement option> =
+        opt ((between whitespace (pstring "else") whitespace) >>. block)
+
+    let ifStatement: Parser<Statement> =
+        pif .>>. pelse
+        |>> fun ((condExpr, thenStmet), elseStmtOpt) -> If(condExpr, thenStmet, elseStmtOpt)
 
     let exprStatement = pexpression |>> Expr
 

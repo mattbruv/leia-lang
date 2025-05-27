@@ -37,6 +37,6 @@ type Declaration =
 and Statement =
     //
     | Print of Expression
-    | If of Expression * Statement
+    | If of Expression * Statement * Statement option
     | Block of Declaration list
     | Expr of Expression

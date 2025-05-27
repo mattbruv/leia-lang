@@ -1,6 +1,9 @@
 
-x = 0
+x = 2
 
 if (2 > x) {
     print "hi mom"
+}
+else {
+    print "otherwise!"
 }
