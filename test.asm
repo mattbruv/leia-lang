@@ -1,7 +1,7 @@
-.const 0 "hello world"
+.const 0 "hi world"
 
 .main
 .fn_foo
-    PUSH_CONST 0 ; "hello world"
+    PUSH_CONST 0 ; "hi world"
     PRINT
     HALT

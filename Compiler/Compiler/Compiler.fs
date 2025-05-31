@@ -218,6 +218,7 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
 let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
     match declaration with
     | Function fn ->
+
         let ps =
             match fn.parameters with
             | Some ps -> List.map Identifier ps
@@ -279,6 +280,7 @@ let emittedToString emitted =
 
 let compile (program: Declaration list) : string =
     // printf "%A\n" program
+
     let literals = List.collect allDeclarationLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
     //List.map (fun x -> printfn $"{x}") program |> ignore

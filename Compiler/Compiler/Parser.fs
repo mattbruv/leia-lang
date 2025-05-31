@@ -520,7 +520,7 @@ let pstatement: Parser<Statement> =
     choice [ printStatement; ifStatement; block; exprStatement ]
 
 let pparameters: Parser<Ident list> =
-    pidentifier .>>. (many1 (pchar ',' >>. pidentifier))
+    pidentifier .>>. (many (pchar ',' >>. (whitespace >>. pidentifier)))
     // get first, and then possibly rest of params as idents
     |>> fun (a, b) -> a :: b
 
@@ -530,14 +530,14 @@ let pfunction: Parser<Function> =
     >>. pidentifier
     .>> whitespace
     .>> (pchar '(')
-    .>>. (between whitespace (opt pidentifier) whitespace) // optional params list
+    .>>. (between whitespace (opt pparameters) whitespace) // optional params list
     .>> (pchar ')')
     .>>. (between whitespace pblock whitespace) // function body
     |>> fun ((name, parameters), body) ->
-        printfn $"{parameters}"
+        //printfn $"{parameters}"
 
         { name = name
-          parameters = Some []
+          parameters = parameters
           body = body }
 
 let pdecl: Parser<Declaration> =

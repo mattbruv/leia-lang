@@ -3,7 +3,7 @@
 
 
 
-fn foo( x )   {
-    print "hello world"
+fn foo ( x, y, z )   {
+    print "hi world"
 }
 
