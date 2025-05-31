@@ -2,6 +2,7 @@ module Parser
 
 open System
 open System.Runtime.InteropServices.JavaScript
+open System.Runtime.InteropServices.Marshalling
 open Grammar
 
 type ParserLabel = string
@@ -525,18 +526,24 @@ let pparameters: Parser<Ident list> =
 
 let pfunction: Parser<Function> =
     (pstring "fn") // fn keyword
-    >>. (between whitespace pidentifier whitespace) // fn name
-    .>>. (between whitespace (opt pparameters) whitespace) // optional params list
-    .>>. pblock // function body
+    >>. whitespace1
+    >>. pidentifier
+    .>> whitespace
+    .>> (pchar '(')
+    .>>. (between whitespace (opt pidentifier) whitespace) // optional params list
+    .>> (pchar ')')
+    .>>. (between whitespace pblock whitespace) // function body
     |>> fun ((name, parameters), body) ->
+        printfn $"{parameters}"
+
         { name = name
-          parameters = parameters
+          parameters = Some []
           body = body }
 
 let pdecl: Parser<Declaration> =
     choice
-        [ pstatement |>> Statement // parse out statements into declarations
-          pfunction |>> Function ]
+        [ pfunction |>> Function // parse out functions
+          pstatement |>> Statement ] // parse out statements into declarations
 
 pexpressionRef.Value <- passignment
 pdeclarationRef.Value <- pdecl

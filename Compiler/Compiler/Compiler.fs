@@ -1,6 +1,7 @@
 module Compiler
 
 open System.Collections.Generic
+open System.Reflection.Emit
 open Grammar
 open Microsoft.FSharp.Collections
 open Opcodes
@@ -151,7 +152,19 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
-    | Function fn -> failwith "todo"
+    | Function fn ->
+        // Add function label
+        let label = Label(Label.Label($"fn_{Ident.value fn.name}"))
+        // Add compiled body
+        let body, env2 =
+            fn.body
+            |> List.fold
+                (fun (acc, currentEnv) stmt ->
+                    let emitted, newEnv = compileDeclaration stmt currentEnv
+                    (acc @ emitted, newEnv))
+                ([], env)
+
+        [ label ] @ body, env2
     | Statement statement -> compileStatement statement env
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
@@ -204,7 +217,15 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
 
 let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
     match declaration with
-    | Function fn -> failwith $"TODO: parse literals from fn: {(Ident.value fn.name)}"
+    | Function fn ->
+        let ps =
+            match fn.parameters with
+            | Some ps -> List.map Identifier ps
+            | None -> []
+
+        let body = List.collect allDeclarationLiterals fn.body
+
+        [ Identifier fn.name ] @ ps @ body
     | Statement statement -> allStatementLiterals statement
 
 and allStatementLiterals (statement: Statement) : Literal list =
@@ -260,6 +281,7 @@ let compile (program: Declaration list) : string =
     // printf "%A\n" program
     let literals = List.collect allDeclarationLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
+    //List.map (fun x -> printfn $"{x}") program |> ignore
 
     let env: CompilerEnv =
         { locals = Map.empty

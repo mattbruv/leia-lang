@@ -1,3 +1,7 @@
-Line: 5 Col: 6 Error parsing unknown andThen end of input
-fn foo(x) {
-      ^Expected end of input but found '('
+.const 0 "hello world"
+
+.main
+.fn_foo
+    PUSH_CONST 0 ; "hello world"
+    PRINT
+    HALT
