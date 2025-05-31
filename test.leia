@@ -1,9 +1,8 @@
 
-x = 2
 
-if (2 > x) {
-    print "hi mom"
-}
-else {
-    print "otherwise!"
+
+
+
+fn foo ( x ) {
+    print x
 }

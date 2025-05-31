@@ -1,6 +1,7 @@
 module Parser
 
 open System
+open System.Runtime.InteropServices.JavaScript
 open Grammar
 
 type ParserLabel = string
@@ -329,7 +330,7 @@ let pbool =
           pstring "false" |>> (fun _ -> Boolean false) ]
     <?> "boolean"
 
-let pidentifier =
+let pidentifier: Parser<Ident> =
     let isAlpha c = Char.IsLetter c
     let isAlphaNum c = Char.IsLetterOrDigit c || c = '_'
     let first = satisfy isAlpha "identifier (start letter)"
@@ -339,7 +340,7 @@ let pidentifier =
     |>> (fun (head, tail) ->
         let chars = head :: tail
         let str = String.Concat chars
-        Identifier str)
+        Ident str)
     <?> "identifier"
 
 let pstringLiteral =
@@ -375,7 +376,7 @@ let pgrouping =
 // A primary expression is either a literal value or a grouping
 let pprimary: Parser<Expression> =
     let literalParsers =
-        [ pstringLiteral; pfloat; pint; pbool; pidentifier ]
+        [ pstringLiteral; pfloat; pint; pbool; pidentifier |>> Identifier ]
         |> List.map (fun p -> p |>> Literal)
 
     choice (pgrouping :: literalParsers)
@@ -487,21 +488,17 @@ let plogic_or: Parser<Expression> =
 let passignment: Parser<Expression> =
     let passign =
         pidentifier .>> (whitespace >>. (pchar '=') .>> whitespace) .>>. pexpression
-        |>> fun (x, expr) ->
-            match x with
-            | Identifier s -> Assignment(s, expr)
-            | _ -> failwith "Must assign to an identifier"
+        |>> Assignment
 
     passign <|> plogic_or
 
+let pblock: Parser<Declaration list> =
+    (pchar '{') >>. (whitespace >>. many pdeclaration .>> whitespace)
+    .>> (pchar '}')
+
 let pstatement: Parser<Statement> =
     let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
-
-
-    let block =
-        (pchar '{') >>. (whitespace >>. many pdeclaration .>> whitespace)
-        .>> (pchar '}')
-        |>> Block
+    let block = pblock |>> Block
 
     let pif =
         (between whitespace (pstring "if") whitespace)
@@ -515,17 +512,36 @@ let pstatement: Parser<Statement> =
 
     let ifStatement: Parser<Statement> =
         pif .>>. pelse
-        |>> fun ((condExpr, thenStmet), elseStmtOpt) -> If(condExpr, thenStmet, elseStmtOpt)
+        |>> fun ((condExpr, thenStatement), elseStmtOpt) -> If(condExpr, thenStatement, elseStmtOpt)
 
     let exprStatement = pexpression |>> Expr
 
     choice [ printStatement; ifStatement; block; exprStatement ]
 
+let pparameters: Parser<Ident list> =
+    pidentifier .>>. (many1 (pchar ',' >>. pidentifier))
+    // get first, and then possibly rest of params as idents
+    |>> fun (a, b) -> a :: b
+
+let pfunction: Parser<Function> =
+    (pstring "fn") // fn keyword
+    >>. (between whitespace pidentifier whitespace) // fn name
+    .>>. (between whitespace (opt pparameters) whitespace) // optional params list
+    .>>. pblock // function body
+    |>> fun ((name, parameters), body) ->
+        { name = name
+          parameters = parameters
+          body = body }
+
+let pdecl: Parser<Declaration> =
+    choice
+        [ pstatement |>> Statement // parse out statements into declarations
+          pfunction |>> Function ]
 
 pexpressionRef.Value <- passignment
-pdeclarationRef.Value <- (pstatement |>> Declaration.Statement)
+pdeclarationRef.Value <- pdecl
 
 let program =
-    many whitespaceChar >>. sepBy1 pstatement whitespace1
+    many whitespaceChar >>. sepBy1 pdeclaration whitespace1
     .>> many whitespaceChar
     .>> eof

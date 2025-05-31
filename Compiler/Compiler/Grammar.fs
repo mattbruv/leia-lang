@@ -18,20 +18,30 @@ type BinaryOp =
     | And
     | Or
 
+type Ident = Ident of string
+
+module Ident =
+    let value (Ident s) = s
+
 type Literal =
     | Int of int
     | Float of float
     | LString of string
     | Boolean of bool
-    | Identifier of string
+    | Identifier of Ident
 
 type Expression =
     | Literal of Literal
     | BinaryOp of BinaryOp * Expression * Expression
-    | Assignment of string * Expression
+    | Assignment of Ident * Expression
 
-type Declaration =
-    | Function
+type Function =
+    { name: Ident
+      parameters: Ident list option
+      body: Declaration list }
+
+and Declaration =
+    | Function of Function
     | Statement of Statement
 
 and Statement =

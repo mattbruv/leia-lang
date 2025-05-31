@@ -44,7 +44,7 @@ let formatLiteral literal =
     | Float f -> f.ToString()
     | LString s -> $"\"{s}\""
     | Boolean b -> b.ToString()
-    | Identifier s -> s
+    | Identifier s -> Ident.value s
 
 let rec collectConstants (constants: HashSet<Literal>) (lit: Literal) =
     match lit with
@@ -56,7 +56,7 @@ let rec collectConstants (constants: HashSet<Literal>) (lit: Literal) =
 
 let rec collectLiterals (literals: HashSet<string>) (lit: Literal) =
     match lit with
-    | Identifier ident -> literals.Add(ident) |> ignore
+    | Identifier ident -> literals.Add(Ident.value ident) |> ignore
     | _ -> ()
 
 let collectConstantsFromList (lits: Literal list) =
@@ -77,7 +77,7 @@ let rec compileLiteral (literal: Literal) (env: CompilerEnv) : Emitted list * Co
 
     match literal with
     | Identifier ident ->
-        match getLocal env ident with
+        match getLocal env (Ident.value ident) with
         | Some entry -> [ emitWithComment (LoadLocal entry.Value, Some entry.Key) ], env
         | None -> failwith $"Identifier not found in table: {ident}"
 
@@ -133,7 +133,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
     | Literal literal -> compileLiteral literal env
     | Assignment(ident, expression) ->
         let exprInstrs, env' = compileExpression expression env
-        let slot, env'' = getOrAddLocal env' ident
+        let slot, env'' = getOrAddLocal env' (Ident.value ident)
 
         let instrs =
             let store = [ emitWithComment (StoreLocal slot, Some $"{ident}") ]
@@ -141,7 +141,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             match expression with
             // If we are assigning something which was previously assigned, emit a load so it's on the stack again when we pull it.
             | Assignment(s, _) ->
-                let childIdx, _ = getOrAddLocal env'' s
+                let childIdx, _ = getOrAddLocal env'' (Ident.value s)
                 let load = [ emitWithComment (LoadLocal childIdx, Some $"load {s} again") ]
                 exprInstrs @ load @ store
             // otherwise, just store it
@@ -151,7 +151,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
-    | Function -> failwith "todo"
+    | Function fn -> failwith "todo"
     | Statement statement -> compileStatement statement env
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
@@ -204,7 +204,7 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
 
 let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
     match declaration with
-    | Function -> failwith "todo"
+    | Function fn -> failwith $"TODO: parse literals from fn: {(Ident.value fn.name)}"
     | Statement statement -> allStatementLiterals statement
 
 and allStatementLiterals (statement: Statement) : Literal list =
@@ -256,9 +256,9 @@ let emittedToString emitted =
         | Some value -> prefix + op + " ; " + value
         | None -> prefix + op
 
-let compile (program: Statement list) : string =
+let compile (program: Declaration list) : string =
     // printf "%A\n" program
-    let literals = List.collect allStatementLiterals program
+    let literals = List.collect allDeclarationLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
 
     let env: CompilerEnv =
@@ -271,7 +271,7 @@ let compile (program: Statement list) : string =
         program
         |> List.fold
             (fun (acc, currentEnv) stmt ->
-                let emitted, newEnv = compileStatement stmt currentEnv
+                let emitted, newEnv = compileDeclaration stmt currentEnv
                 (acc @ emitted, newEnv))
             ([], env)
 
