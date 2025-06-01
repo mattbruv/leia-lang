@@ -38,4 +38,4 @@ jobs:
         run: |
           mkdir tests/out
           cd vm
-          cargo test -- --test-threads=1
+          cargo test

@@ -2,12 +2,12 @@ use std::{cell::RefCell, fs, rc::Rc};
 use vm::{assembler::parse_assembly, vm::VM};
 
 fn compile_and_run(name: &str) -> Vec<String> {
-    let compiler_proj = "../Compiler/Compiler/Compiler.fsproj";
+    let compiler_dll = "../Compiler/Compiler/bin/Release/net8.0/Compiler.dll";
     let src_path = format!("../tests/src/{}.leia", name);
     let out_path = format!("../tests/out/{}.asm", name);
 
     let output = std::process::Command::new("dotnet")
-        .args(["run", "--project", compiler_proj, &src_path])
+        .args([compiler_dll, &src_path])
         .output()
         .expect("Failed to run compiler");
 

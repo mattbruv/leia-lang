@@ -3,9 +3,26 @@ use std::{
     fs::{self, File},
     io::Write,
     path::Path,
+    process::Command,
 };
 
 fn main() {
+    println!("cargo:rerun-if-changed=../Compiler/Compiler/"); // only rebuild if source changed
+
+    let status = Command::new("dotnet")
+        .args([
+            "build",
+            "../Compiler/Compiler/Compiler.fsproj",
+            "-c",
+            "Release",
+        ])
+        .status()
+        .expect("Failed to build F# compiler");
+
+    if !status.success() {
+        panic!("dotnet build failed");
+    }
+
     let out_dir = env::var("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("generated_tests.rs");
     let mut f = File::create(&dest_path).unwrap();
