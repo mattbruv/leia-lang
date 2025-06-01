@@ -1,0 +1,9 @@
+
+
+fn foo(a, c, b) {
+    print a;
+    print b;
+    print c;
+}
+
+foo(1, 2, 3);

@@ -190,6 +190,7 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
         let storeParams: Emitted list =
             paramLocals //
             |> Map.toList
+            |> List.sortBy snd // store in argument order which was pushed onto the stack
             |> List.map (fun (k, v) -> emitWithComment (StoreLocal v, Some $"push {k}"))
 
         // Add compiled body
