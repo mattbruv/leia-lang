@@ -1,0 +1,10 @@
+
+
+fn foo(n) {
+    if (n >= 0) {
+        print n;
+        foo(n - 1);
+    }
+}
+
+foo(3);
