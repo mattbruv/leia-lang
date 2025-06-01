@@ -1,16 +1,11 @@
-.const 0 1
-.const 1 "hello world"
-.const 2 2
+.const 0 "hello world"
+.const 1 13
 
-.main
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
 .fn_foo
-    PUSH_CONST 1 ; "hello world"
+    PUSH_CONST 0 ; "hello world"
     PRINT
     RET
-    PUSH_CONST 2 ; 2
-    PUSH_CONST 2 ; 2
-    ADD
+.fn_main
+    PUSH_CONST 1 ; 13
+    CALL fn_foo
     HALT

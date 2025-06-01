@@ -178,7 +178,13 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
                     (acc @ emitted, newEnv))
                 ([], env)
 
-        [ label ] @ body @ [ emit Return ], env2
+        // If we are in the main function, we don't want to return, but rather halt
+        let returnOp =
+            match Ident.value fn.name with
+            | "main" -> [ emit Halt ]
+            | _ -> [ emit Return ]
+
+        [ label ] @ body @ returnOp, env2
     | Statement statement -> compileStatement statement env
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
@@ -293,8 +299,54 @@ let emittedToString emitted =
         | Some value -> prefix + op + " ; " + value
         | None -> prefix + op
 
+let organize (program: Declaration list) =
+    // Check for main function at top level.
+    // If one doesn't exist, bundle all top level statements into it.
+
+    let maybeMain =
+        program
+        |> List.tryPick (function
+            | FunctionDeclaration fn when (Ident.value fn.name = "main") -> Some(fn)
+            | _ -> None)
+
+    let topLevelDeclarations =
+        program
+        |> List.choose (function
+            | FunctionDeclaration fn when Ident.value fn.name <> "main" -> Some(FunctionDeclaration fn)
+            | _ -> None)
+
+    let topLevelStatements =
+        program
+        |> List.choose (function
+            | Statement s -> Some s
+            | _ -> None)
+
+    let output: Declaration list =
+        match maybeMain with
+        | Some main ->
+            // If we have defined a main function but still have top level statements, throw an error
+            if List.length topLevelStatements > 0 then
+                failwith "main() is explicitly defined but there are top level statements outside of main."
+
+            topLevelDeclarations @ [ FunctionDeclaration main ]
+        | None ->
+            // If the user didn't define main, let's create our own.
+            let stmts = topLevelStatements |> List.map Statement
+
+            let main =
+                FunctionDeclaration
+                    { name = Ident "main"
+                      parameters = None
+                      body = stmts }
+
+            topLevelDeclarations @ [ main ]
+
+    output
+
+
 let compile (program: Declaration list) : string =
     // printf "%A\n" program
+    let program = organize program
 
     let literals = List.collect allDeclarationLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
@@ -306,7 +358,7 @@ let compile (program: Declaration list) : string =
           nextSlot = 0
           nextLabel = 0 }
 
-    let statements, _ =
+    let programEmitted, _ =
         program
         |> List.fold
             (fun (acc, currentEnv) stmt ->
@@ -314,16 +366,7 @@ let compile (program: Declaration list) : string =
                 (acc @ emitted, newEnv))
             ([], env)
 
-    let main = Label(Label.Label "main")
-    let halt = emit Halt
-
-    let programEmitted: Emitted list = (main :: statements) @ [ halt ]
-
-    let main =
-        programEmitted
-        //
-        |> List.map emittedToString
-        |> String.concat "\n"
+    let main = programEmitted |> List.map emittedToString |> String.concat "\n"
 
     let output = (constTableToString constTable) + "\n\n" + main
     output

@@ -1,8 +1,10 @@
 
-1 + 1;
 
 fn foo ( x, y, z ) {
     print "hello world";
 }
 
-2 + 2;
+
+fn main() {
+    foo(13);
+}
