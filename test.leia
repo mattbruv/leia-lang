@@ -1,8 +1,8 @@
 
-
+1 + 1;
 
 fn foo ( x, y, z ) {
     print "hello world";
 }
 
-foo(1, 2, 3);
+2 + 2;

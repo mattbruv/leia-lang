@@ -534,7 +534,7 @@ let pstatement: Parser<Statement> =
         pif .>>. pelse
         |>> fun ((condExpr, thenStatement), elseStmtOpt) -> If(condExpr, thenStatement, elseStmtOpt)
 
-    let exprStatement = pexpression .>> whitespace .>> (pchar ';') |>> Expr
+    let exprStatement = pexpression .>> whitespace .>> (pchar ';') |>> ExprStatement
 
     choice [ exprStatement; ifStatement; printStatement; block ]
 
@@ -561,11 +561,10 @@ let pfunction: Parser<Function> =
 
 let pdecl: Parser<Declaration> =
     choice
-        [ pfunction |>> Function // parse out functions
+        [ pfunction |>> FunctionDeclaration // parse out functions
           pstatement |>> Statement ] // parse out statements into declarations
 
 pexpressionRef.Value <- passignment
 pdeclarationRef.Value <- pdecl
 
-let program =
-    whitespace >>. sepBy1 pdeclaration whitespace1 .>> many whitespaceChar .>> eof
+let program = whitespace >>. sepBy1 pdeclaration whitespace .>> whitespace .>> eof

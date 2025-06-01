@@ -46,7 +46,7 @@ type Function =
       body: Declaration list }
 
 and Declaration =
-    | Function of Function
+    | FunctionDeclaration of Function
     | Statement of Statement
 
 and Statement =
@@ -54,4 +54,4 @@ and Statement =
     | Print of Expression
     | If of Expression * Statement * Statement option
     | Block of Declaration list
-    | Expr of Expression
+    | ExprStatement of Expression

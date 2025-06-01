@@ -166,7 +166,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
-    | Function fn ->
+    | FunctionDeclaration fn ->
         // Add function label
         let label = Label(fnLabel fn.name)
         // Add compiled body
@@ -186,7 +186,7 @@ and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
     | Statement.Print e ->
         let exprInstrs, env' = (compileExpression e env)
         exprInstrs @ [ emit Print ], env'
-    | Statement.Expr e -> (compileExpression e env)
+    | Statement.ExprStatement e -> (compileExpression e env)
     | If(condition, ifBody, elseBody) ->
         // if the expression is false, jump to end
         let elseStart, env2 = getNextLabel env
@@ -232,7 +232,7 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
 
 let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
     match declaration with
-    | Function fn ->
+    | FunctionDeclaration fn ->
 
         let ps =
             match fn.parameters with
@@ -247,7 +247,7 @@ let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
 and allStatementLiterals (statement: Statement) : Literal list =
     match statement with
     | Statement.Print e -> allExpressionLiterals e
-    | Statement.Expr e -> allExpressionLiterals e
+    | Statement.ExprStatement e -> allExpressionLiterals e
     | If(e, ifBlock, elseBlock) ->
         let maybeElse =
             match elseBlock with
