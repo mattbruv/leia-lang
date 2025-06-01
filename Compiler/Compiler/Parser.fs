@@ -374,6 +374,12 @@ let pdeclaration, pdeclarationRef = createParserForwardedToRef<Declaration> ()
 let pgrouping =
     between ((pchar '(') .>> whitespace) pexpression (whitespace >>. (pchar ')'))
 
+
+let pargs: Parser<Expression list> =
+    pexpression .>>. (many (pchar ',' >>. (whitespace >>. pexpression)))
+    // get first, and then possibly rest of params as idents
+    |>> fun (a, b) -> a :: b
+
 // A primary expression is either a literal value or a grouping
 let pprimary: Parser<Expression> =
     let literalParsers =
@@ -382,12 +388,21 @@ let pprimary: Parser<Expression> =
 
     choice (pgrouping :: literalParsers)
 
+let pcall: Parser<Expression> =
+    pidentifier // function call
+    .>> whitespace
+    .>> pchar '('
+    .>>. (between whitespace pargs whitespace)
+    .>> (pchar ')')
+    |>> (fun (ident, args) -> Call { name = ident; arguments = args })
+    <|> pprimary
+
 let pfactor: Parser<Expression> =
     let operator = (pchar '*') <|> (pchar '/') <|> (pchar '%')
 
-    let opAndPrimary = whitespace >>. operator .>> whitespace .>>. pprimary
+    let opAndCall = whitespace >>. operator .>> whitespace .>>. pcall
 
-    pprimary .>>. many opAndPrimary
+    pcall .>>. many opAndCall
     |>> fun (first, rest) ->
         // fold the list into a binary operation chain
         rest

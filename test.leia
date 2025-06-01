@@ -1,6 +1,5 @@
 
 
 
-fn foo(x) {
-    print "hello world";
-}
+
+foo(1, 2, 3) ;

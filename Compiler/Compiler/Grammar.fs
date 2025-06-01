@@ -30,10 +30,15 @@ type Literal =
     | Boolean of bool
     | Identifier of Ident
 
-type Expression =
+type FunctionCall =
+    { name: Ident
+      arguments: Expression list }
+
+and Expression =
     | Literal of Literal
     | BinaryOp of BinaryOp * Expression * Expression
     | Assignment of Ident * Expression
+    | Call of FunctionCall
 
 type Function =
     { name: Ident
