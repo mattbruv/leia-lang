@@ -148,6 +148,19 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             | _ -> exprInstrs @ store
 
         instrs, env''
+    | Expression.Call fn ->
+        // Compile function call
+        // push all expression arguments onto stack in order
+        let body, env2 =
+            fn.arguments
+            |> List.fold
+                (fun (acc, currentEnv) stmt ->
+                    let emitted, newEnv = compileExpression stmt currentEnv
+                    (acc @ emitted, newEnv))
+                ([], env)
+
+        let call = body @ [ emit (Call(Label.Label(Ident.value fn.name))) ]
+        call, env2
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
@@ -213,6 +226,7 @@ let rec allExpressionLiterals (expr: Expression) : Literal list =
     | Literal literal -> [ literal ]
     | BinaryOp(_, left, right) -> [ left; right ] |> List.collect allExpressionLiterals
     | Assignment(_, expression) -> allExpressionLiterals expression
+    | Expression.Call fn -> [ Identifier fn.name ] @ List.collect allExpressionLiterals fn.arguments
 
 let rec allDeclarationLiterals (declaration: Declaration) : Literal list =
     match declaration with
