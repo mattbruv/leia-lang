@@ -1,0 +1,11 @@
+
+
+
+fn fib(n, a, b, counter) {
+    print a;
+    if (counter < n) {
+        fib(n, b, a + b, counter + 1);
+    }
+}
+
+fib(45, 0, 1, 0);
