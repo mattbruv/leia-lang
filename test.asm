@@ -1,12 +1,13 @@
-.const 0 "hello from foo()!"
+.const 0 1
+.const 1 200
+.const 2 3
 
-
-.fn_foo
-    PUSH_CONST 0 ; "hello from foo()!"
-    PRINT
-    RET
 
 .fn_main
-    CALL fn_foo
-    CALL fn_foo
+    PUSH_CONST 0 ; 1
+    PUSH_CONST 1 ; 200
+    ADD
+    PUSH_CONST 2 ; 3
+    DIV
+    PRINT
     HALT

@@ -544,7 +544,7 @@ let pstatement: Parser<Statement> =
 
     let exprStatement = pexpression .>> whitespace .>> (pchar ';') |>> ExprStatement
 
-    choice [ exprStatement; ifStatement; printStatement; block ]
+    choice [ printStatement; ifStatement; block; exprStatement ]
 
 let pparameters: Parser<Ident list> =
     pidentifier .>>. (many (pchar ',' >>. (whitespace >>. pidentifier)))

@@ -348,11 +348,11 @@ let organize (program: Declaration list) =
 
 let compile (program: Declaration list) : string =
     // printf "%A\n" program
+    // List.map (fun x -> printfn $"{x}") program |> ignore
     let program = organize program
 
     let literals = List.collect allDeclarationLiterals program
     let constTable = buildConstantTable (collectConstantsFromList literals)
-    //List.map (fun x -> printfn $"{x}") program |> ignore
 
     let env: CompilerEnv =
         { locals = Map.empty
