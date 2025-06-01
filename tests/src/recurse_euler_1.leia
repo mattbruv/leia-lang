@@ -1,0 +1,17 @@
+
+
+fn sum_multiples(limit, current, total) {
+    if (current >= limit) {
+        total;
+    }
+    else {
+        if (current % 3 == 0 || current % 5 == 0) {
+            sum_multiples(limit, current + 1, total + current);
+        }
+        else {
+            sum_multiples(limit, current + 1, total);
+        }
+    }
+}
+
+print sum_multiples(1000, 0, 0);
