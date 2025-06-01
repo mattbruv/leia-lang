@@ -32,7 +32,8 @@ let getOrAddLocal (env: CompilerEnv) (name: string) : int * CompilerEnv =
 
 type Emitted =
     | Instruction of Opcode * string option
-    | Label of Label
+    | FunctionLabel of Label
+    | EmittedLabel of Label
     | Comment of string
 
 let emit opcode : Emitted = Instruction(opcode, None)
@@ -127,7 +128,7 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
             leftEmit //
             @ [ emit (jumpOp label_end); emit Pop ]
             @ rightEmit
-            @ [ Label label_end ],
+            @ [ EmittedLabel label_end ],
             env3
 
         | _ -> leftEmit @ rightEmit @ [ opEmit op ], env''
@@ -168,7 +169,7 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
     match declaration with
     | FunctionDeclaration fn ->
         // Add function label
-        let label = Label(fnLabel fn.name)
+        let label = FunctionLabel(fnLabel fn.name)
         // Add compiled body
         let body, env2 =
             fn.body
@@ -210,10 +211,10 @@ and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
         @ [ emit Pop ] // pop if condition
         @ bodyInstrs // If block
         @ [ emit (Jump ifElseEnd) ] // We have already run the If block, so jump past else
-        @ [ Label elseStart ]
+        @ [ EmittedLabel elseStart ]
         @ [ emit Pop ] // pop if condition
         @ elseInstrs // Else block
-        @ [ Label ifElseEnd ], // End of if statement
+        @ [ EmittedLabel ifElseEnd ], // End of if statement
         env5
 
     | Block declarations ->
@@ -265,7 +266,8 @@ and allStatementLiterals (statement: Statement) : Literal list =
 
 let emittedToString emitted =
     match emitted with
-    | Label s -> "." + Label.value s
+    | FunctionLabel s -> "\n." + Label.value s
+    | EmittedLabel s -> "." + Label.value s
     | Comment s -> "; " + s
     | Instruction(opcode, stringOption) ->
         let op =
