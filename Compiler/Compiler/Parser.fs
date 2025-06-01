@@ -536,7 +536,7 @@ let pstatement: Parser<Statement> =
 
     let exprStatement = pexpression .>> whitespace .>> (pchar ';') |>> Expr
 
-    choice [ printStatement; ifStatement; block; exprStatement ]
+    choice [ exprStatement; ifStatement; printStatement; block ]
 
 let pparameters: Parser<Ident list> =
     pidentifier .>>. (many (pchar ',' >>. (whitespace >>. pidentifier)))
@@ -568,6 +568,4 @@ pexpressionRef.Value <- passignment
 pdeclarationRef.Value <- pdecl
 
 let program =
-    many whitespaceChar >>. sepBy1 pdeclaration whitespace1
-    .>> many whitespaceChar
-    .>> eof
+    whitespace >>. sepBy1 pdeclaration whitespace1 .>> many whitespaceChar .>> eof

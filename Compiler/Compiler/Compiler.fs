@@ -105,6 +105,8 @@ let opEmit op =
     | And
     | Or -> failwith $"Should not be emitting instruction {op}"
 
+let fnLabel ident = Label.Label($"fn_{Ident.value ident}")
+
 let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
     match e with
     | BinaryOp(op, left, right) ->
@@ -159,14 +161,14 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
                     (acc @ emitted, newEnv))
                 ([], env)
 
-        let call = body @ [ emit (Call(Label.Label(Ident.value fn.name))) ]
+        let call = body @ [ emit (Call(fnLabel fn.name)) ]
         call, env2
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
     | Function fn ->
         // Add function label
-        let label = Label(Label.Label($"fn_{Ident.value fn.name}"))
+        let label = Label(fnLabel fn.name)
         // Add compiled body
         let body, env2 =
             fn.body
@@ -176,7 +178,7 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
                     (acc @ emitted, newEnv))
                 ([], env)
 
-        [ label ] @ body, env2
+        [ label ] @ body @ [ emit Return ], env2
     | Statement statement -> compileStatement statement env
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
