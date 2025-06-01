@@ -392,9 +392,16 @@ let pcall: Parser<Expression> =
     pidentifier // function call
     .>> whitespace
     .>> pchar '('
-    .>>. (between whitespace pargs whitespace)
+    .>>. (between whitespace (opt pargs) whitespace)
     .>> (pchar ')')
-    |>> (fun (ident, args) -> Call { name = ident; arguments = args })
+    |>> (fun (ident, args) ->
+        let arguments =
+            // Handle case where no arguments are passed.
+            match args with
+            | None -> []
+            | Some value -> value
+
+        Call { name = ident; arguments = arguments })
     <|> pprimary
 
 let pfactor: Parser<Expression> =

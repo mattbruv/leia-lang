@@ -1,31 +1,12 @@
-.const 0 1
-.const 1 "OK"
+.const 0 "hello from foo()!"
 
 
 .fn_foo
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
-    PRINT
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
-    PRINT
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
-    PRINT
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
-    PRINT
-    PUSH_CONST 0 ; 1
-    PUSH_CONST 0 ; 1
-    ADD
+    PUSH_CONST 0 ; "hello from foo()!"
     PRINT
     RET
 
 .fn_main
-    PUSH_CONST 1 ; "OK"
-    PRINT
+    CALL fn_foo
+    CALL fn_foo
     HALT
