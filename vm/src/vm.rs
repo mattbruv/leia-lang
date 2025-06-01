@@ -39,7 +39,7 @@ impl VM {
     }
 
     pub fn run(&mut self) -> () {
-        println!("PC START: {}", self.pc);
+        //println!("PC START: {}", self.pc);
         loop {
             //println!("{:?}", self.stack);
             if self.pc >= self.program.code.len() {
@@ -51,6 +51,7 @@ impl VM {
             // and then using a mutable self ref later.
             // TODO: maybe write a separate function which passes the touched properties as args to avoid this?
             let code = self.program.code[self.pc].clone();
+            /*
             println!(
                 "{}: code {:?} stack: {:?} locals: {:?}",
                 self.pc,
@@ -58,6 +59,7 @@ impl VM {
                 self.stack,
                 self.locals()
             );
+            */
 
             match code {
                 Opcode::Pop => {

@@ -149,7 +149,7 @@ fn parse_opcodes_with_labels(asm: &str) -> (Vec<Opcode>, usize) {
         }
     }
 
-    println!("{:?}", labels);
+    //println!("{:?}", labels);
     let main_pc = *labels.get("fn_main").unwrap_or(&0);
 
     (opcodes, main_pc)

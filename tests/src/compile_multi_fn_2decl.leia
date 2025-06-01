@@ -1,9 +1,12 @@
 
 
+
 fn foo() {
     print 1 + 1;
     print 1 + 1;
-    print 1 + 1;
+}
+
+fn bar() {
     print 1 + 1;
     print 1 + 1;
 }

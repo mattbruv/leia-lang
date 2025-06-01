@@ -509,13 +509,14 @@ let passignment: Parser<Expression> =
     passign <|> plogic_or
 
 let pblock: Parser<Declaration list> =
-    (pchar '{') >>. (whitespace >>. many pdeclaration .>> whitespace)
+    (pchar '{') >>. many (between whitespace pdeclaration whitespace)
     .>> (pchar '}')
 
 let pstatement: Parser<Statement> =
     let printStatement =
-        (pstring "print")
-        >>. (whitespace >>. pexpression .>> whitespace .>> (pchar ';'))
+        (pstring "print") // keyword
+        >>. (between whitespace pexpression whitespace)
+        .>> (pchar ';')
         |>> Print
 
     let block = pblock |>> Block
@@ -559,7 +560,7 @@ let pfunction: Parser<Function> =
           parameters = parameters
           body = body }
 
-let pdecl: Parser<Declaration> =
+let pdecl =
     choice
         [ pfunction |>> FunctionDeclaration // parse out functions
           pstatement |>> Statement ] // parse out statements into declarations
@@ -567,4 +568,5 @@ let pdecl: Parser<Declaration> =
 pexpressionRef.Value <- passignment
 pdeclarationRef.Value <- pdecl
 
-let program = whitespace >>. sepBy1 pdeclaration whitespace .>> whitespace .>> eof
+let program: Parser<Declaration list> =
+    whitespace >>. sepBy pdeclaration whitespace .>> whitespace .>> eof
