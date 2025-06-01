@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 #[derive(Debug)]
 pub struct Program {
+    pub entry: usize,
     pub code: Vec<Opcode>,
     pub constants: Vec<ConstantValue>,
 }

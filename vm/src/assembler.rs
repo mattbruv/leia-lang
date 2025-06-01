@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use crate::instruction::{ConstantIndex, ConstantValue, Opcode, Program};
 
 pub fn parse_assembly(asm: &str) -> Program {
+    let (code, entry) = parse_opcodes_with_labels(asm);
     Program {
-        code: parse_opcodes_with_labels(asm),
+        code,
+        entry,
         constants: parse_constants(asm),
     }
 }
@@ -20,7 +22,7 @@ enum UnresolvedOpcode {
 }
 
 /// Parses the input and resolves jumps
-fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
+fn parse_opcodes_with_labels(asm: &str) -> (Vec<Opcode>, usize) {
     let mut opcodes = Vec::new();
     let mut labels = HashMap::new();
     let mut unresolved = Vec::new();
@@ -147,7 +149,10 @@ fn parse_opcodes_with_labels(asm: &str) -> Vec<Opcode> {
         }
     }
 
-    opcodes
+    println!("{:?}", labels);
+    let main_pc = *labels.get("fn_main").unwrap_or(&0);
+
+    (opcodes, main_pc)
 }
 
 fn parse_constants(asm: &str) -> Vec<ConstantValue> {

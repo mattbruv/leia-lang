@@ -19,7 +19,7 @@ pub struct StackFrame {
 impl VM {
     pub fn new(program: Program) -> VM {
         VM {
-            pc: 0,
+            pc: program.entry,
             program,
             stack: vec![],
             call_stack: vec![StackFrame {
@@ -39,6 +39,7 @@ impl VM {
     }
 
     pub fn run(&mut self) -> () {
+        println!("PC START: {}", self.pc);
         loop {
             //println!("{:?}", self.stack);
             if self.pc >= self.program.code.len() {
@@ -50,7 +51,6 @@ impl VM {
             // and then using a mutable self ref later.
             // TODO: maybe write a separate function which passes the touched properties as args to avoid this?
             let code = self.program.code[self.pc].clone();
-            /*
             println!(
                 "{}: code {:?} stack: {:?} locals: {:?}",
                 self.pc,
@@ -58,7 +58,6 @@ impl VM {
                 self.stack,
                 self.locals()
             );
-            */
 
             match code {
                 Opcode::Pop => {
@@ -76,7 +75,10 @@ impl VM {
                         ConstantValue::Str(x) => LeiaValue::Str(x.clone()),
                     });
                 }
-                Opcode::Jump(addr) => self.pc = addr - 1,
+                Opcode::Jump(addr) => {
+                    self.pc = addr;
+                    continue; // don't increment pc
+                }
                 Opcode::Increment(idx) => {
                     if let Some(local) = self.locals_mut().get_mut(idx) {
                         match local {
@@ -135,7 +137,8 @@ impl VM {
                     match val {
                         LeiaValue::Int(x) => {
                             if *x == 0 {
-                                self.pc = addr - 1; // subtracting one because we add it right back after this
+                                self.pc = addr; // - 1; 
+                                continue; // don't increment PC
                             }
                         }
                         _ => panic!("Invalid jp if zero value!"),
@@ -147,7 +150,8 @@ impl VM {
                     match val {
                         LeiaValue::Int(x) => {
                             if *x != 0 {
-                                self.pc = addr - 1; // subtracting one because we add it right back after this
+                                self.pc = addr;
+                                continue; // don't increment PC
                             }
                         }
                         _ => panic!("Invalid jp if zero value!"),
@@ -216,7 +220,8 @@ impl VM {
 
                     self.call_stack.push(frame);
 
-                    self.pc = fn_address - 1; // subtracting 1 because of comments above
+                    self.pc = fn_address;
+                    continue; // don't increment PC
                 }
                 Opcode::Return => {
                     // pop last frame off the stack
