@@ -1,7 +1,6 @@
 module Compiler
 
 open System.Collections.Generic
-open System.Reflection.Emit
 open Grammar
 open Microsoft.FSharp.Collections
 open Opcodes

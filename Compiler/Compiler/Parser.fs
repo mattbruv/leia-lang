@@ -498,7 +498,11 @@ let pblock: Parser<Declaration list> =
     .>> (pchar '}')
 
 let pstatement: Parser<Statement> =
-    let printStatement = (pstring "print") >>. (whitespace >>. pexpression) |>> Print
+    let printStatement =
+        (pstring "print")
+        >>. (whitespace >>. pexpression .>> whitespace .>> (pchar ';'))
+        |>> Print
+
     let block = pblock |>> Block
 
     let pif =
@@ -515,7 +519,7 @@ let pstatement: Parser<Statement> =
         pif .>>. pelse
         |>> fun ((condExpr, thenStatement), elseStmtOpt) -> If(condExpr, thenStatement, elseStmtOpt)
 
-    let exprStatement = pexpression |>> Expr
+    let exprStatement = pexpression .>> whitespace .>> (pchar ';') |>> Expr
 
     choice [ printStatement; ifStatement; block; exprStatement ]
 

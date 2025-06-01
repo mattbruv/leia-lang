@@ -1,5 +1,5 @@
 
 
-print "Hello world!"
-print "привет!"
-print "Hola!"
+print "Hello world!";
+print "привет!";
+print "Hola!";

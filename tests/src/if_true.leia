@@ -1,10 +1,10 @@
-x = 2
+x = 2;
 
 if (2 >= x) {
-    print "if body"
+    print "if body";
 }
 else {
-    print "else body"
+    print "else body";
 }
 
-print "post if"
+print "post if";

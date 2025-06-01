@@ -1,7 +1,7 @@
-x = 2
+x = 2;
 
 if (x > 100) {
-    print "unreachable"
+    print "unreachable";
 }
 
-print "post if"
+print "post if";

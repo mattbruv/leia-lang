@@ -1,9 +1,6 @@
 
 
 
-
-
-fn foo ( x, y, z )   {
-    print "hi world"
+fn foo(x) {
+    print "hello world";
 }
-
