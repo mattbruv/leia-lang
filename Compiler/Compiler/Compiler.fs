@@ -153,9 +153,12 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
         instrs, env''
     | Expression.Call fn ->
         // Compile function call
-        // push all expression arguments onto stack in order
+        // push all expression arguments onto stack in reverse order
+        // we push in reverse order so that they can be popped from stack
+        // and stored as function locals in the correct order
         let body, env2 =
             fn.arguments
+            |> List.rev
             |> List.fold
                 (fun (acc, currentEnv) stmt ->
                     let emitted, newEnv = compileExpression stmt currentEnv
@@ -170,6 +173,25 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
     | FunctionDeclaration fn ->
         // Add function label
         let label = FunctionLabel(fnLabel fn.name)
+
+        let paramNames =
+            match fn.parameters with
+            | Some ps -> List.map Ident.value ps
+            | None -> []
+
+        let paramLocals = paramNames |> List.mapi (fun idx name -> name, idx) |> Map.ofList
+
+        let envWithParams =
+            { env with
+                locals = paramLocals
+                nextSlot = List.length paramNames }
+
+        // pop all arguments off the stack and store them into their respective locals
+        let storeParams: Emitted list =
+            paramLocals //
+            |> Map.toList
+            |> List.map (fun (k, v) -> emitWithComment (StoreLocal v, Some $"push {k}"))
+
         // Add compiled body
         let body, env2 =
             fn.body
@@ -177,7 +199,7 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
                 (fun (acc, currentEnv) stmt ->
                     let emitted, newEnv = compileDeclaration stmt currentEnv
                     (acc @ emitted, newEnv))
-                ([], env)
+                ([], envWithParams)
 
         // If we are in the main function, we don't want to return, but rather halt
         let returnOp =
@@ -185,7 +207,7 @@ let rec compileDeclaration (declaration: Declaration) env : Emitted list * Compi
             | "main" -> [ emit Halt ]
             | _ -> [ emit Return ]
 
-        [ label ] @ body @ returnOp, env2
+        [ label ] @ storeParams @ body @ returnOp, env2
     | Statement statement -> compileStatement statement env
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
