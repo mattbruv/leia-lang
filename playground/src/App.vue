@@ -5,7 +5,7 @@
     </Panel>
 
     <Panel header="Output" class="section output-panel">
-      <pre>{{ 'fuck' }}</pre>
+      <pre>{{ asmOutput }}</pre>
     </Panel>
   </div>
 </template>
@@ -24,7 +24,7 @@ function onCodeUpdate(newCode: string) {
 
 function compileToAsm(code: string): string {
   // Replace with your actual compiler logic
-  return `; asm output for:\n${code}`
+  return `; TODO: compile :\n${code}`
 }
 </script>
 
