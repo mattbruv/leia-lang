@@ -4,8 +4,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Compiler", "Compiler\Compil
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CompilerLib", "CompilerLib\CompilerLib.fsproj", "{619A916C-0A62-4D22-8D87-DA390DB77DDB}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CompilerWeb", "CompilerWeb\CompilerWeb.fsproj", "{BEC6C510-3D10-489E-A347-A67783969766}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,9 +18,5 @@ Global
 		{619A916C-0A62-4D22-8D87-DA390DB77DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{619A916C-0A62-4D22-8D87-DA390DB77DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{619A916C-0A62-4D22-8D87-DA390DB77DDB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BEC6C510-3D10-489E-A347-A67783969766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BEC6C510-3D10-489E-A347-A67783969766}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BEC6C510-3D10-489E-A347-A67783969766}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BEC6C510-3D10-489E-A347-A67783969766}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

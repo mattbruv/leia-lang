@@ -1,4 +1,6 @@
 target
+Compiler/**/*.ts
+Compiler/**/*.js
 .DS_Store
 tests/out
 obj

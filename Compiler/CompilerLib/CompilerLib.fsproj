@@ -12,4 +12,8 @@
         <Compile Include="Compiler.fs"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Fable.Core" Version="4.5.0"/>
+    </ItemGroup>
+
 </Project>

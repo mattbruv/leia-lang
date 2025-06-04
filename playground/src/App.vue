@@ -11,6 +11,7 @@
 </template>
 
 <script lang="ts" setup>
+import { compileWeb } from "../../Compiler/CompilerLib/Compiler.fs.ts"
 import { ref } from 'vue'
 import MonacoEditor from "./components/MonacoEditor.vue"
 
@@ -24,7 +25,11 @@ function onCodeUpdate(newCode: string) {
 
 function compileToAsm(code: string): string {
   // Replace with your actual compiler logic
-  return `; TODO: compile :\n${code}`
+  const result = compileWeb(code)
+  if (result.tag === 0) {
+    return "good" + result.fields[0]
+  }
+  return "bad"
 }
 </script>
 
