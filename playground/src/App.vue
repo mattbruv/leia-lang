@@ -24,12 +24,8 @@ function onCodeUpdate(newCode: string) {
 }
 
 function compileToAsm(code: string): string {
-  // Replace with your actual compiler logic
   const result = compileWeb(code)
-  if (result.tag === 0) {
-    return "good" + result.fields[0]
-  }
-  return "bad"
+  return result.fields[0]
 }
 </script>
 
