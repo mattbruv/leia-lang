@@ -11,7 +11,8 @@
 </template>
 
 <script lang="ts" setup>
-import { compileWeb } from "../../Compiler/CompilerLib/Compiler.fs.ts"
+//@ts-ignore
+import { compileWeb } from "../../Compiler/CompilerLib/Compiler.fs.js"
 import { ref } from 'vue'
 import MonacoEditor from "./components/MonacoEditor.vue"
 
