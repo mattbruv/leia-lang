@@ -7,6 +7,11 @@
     <Panel header="Output" class="section output-panel">
       <pre>{{ asmOutput }}</pre>
     </Panel>
+
+    <Panel header="Output" class="section output-panel">
+      <button @click="onRun">Run</button>
+      <pre>{{ programOutput }}</pre>
+    </Panel>
   </div>
 </template>
 
@@ -15,13 +20,22 @@
 import { compileWeb } from "../../Compiler/CompilerLib/Compiler.fs.js"
 import { ref } from 'vue'
 import MonacoEditor from "./components/MonacoEditor.vue"
+import { run_asm } from "vm";
 
 const sourceCode = ref<string>('print("hello world")')
 const asmOutput = ref<string>('')
+const programOutput = ref<string>('')
 
 function onCodeUpdate(newCode: string) {
   sourceCode.value = newCode
   asmOutput.value = compileToAsm(newCode)
+}
+
+function onRun() {
+  if (asmOutput.value) {
+    const stdout = run_asm(asmOutput.value);
+    programOutput.value = stdout.join("\n")
+  }
 }
 
 function compileToAsm(code: string): string {
