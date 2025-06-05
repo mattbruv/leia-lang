@@ -1,8 +1,6 @@
 module Parser
 
 open System
-open System.Runtime.InteropServices.JavaScript
-open System.Runtime.InteropServices.Marshalling
 open Grammar
 
 type ParserLabel = string

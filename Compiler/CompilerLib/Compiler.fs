@@ -4,6 +4,7 @@ open System.Collections.Generic
 open Grammar
 open Microsoft.FSharp.Collections
 open Opcodes
+open Parser
 
 type ConstTable = IDictionary<int, Literal>
 type LocalMap = Map<string, int>
@@ -395,3 +396,16 @@ let compile (program: Declaration list) : string =
 
     let output = (constTableToString constTable) + "\n\n" + main
     output
+
+
+type CompileResult =
+    | Good of string
+    | Bad of string
+
+let compileWeb input =
+
+    let output = run program input
+
+    match output with
+    | Success(declarations, _) -> Good(compile declarations)
+    | Failure _ -> Bad(printResult output)

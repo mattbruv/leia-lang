@@ -6,14 +6,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Grammar.fs"/>
-        <Compile Include="Opcodes.fs"/>
-        <Compile Include="Parser.fs"/>
-        <Compile Include="Compiler.fs"/>
+        <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="Program.fs"/>
+        <ProjectReference Include="..\CompilerLib\CompilerLib.fsproj"/>
     </ItemGroup>
 
 </Project>
