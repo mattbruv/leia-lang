@@ -514,7 +514,9 @@ let passignment: Parser<Expression> =
     passign <|> plogic_or
 
 let pblock: Parser<Declaration list> =
-    (pchar '{') >>. many (between whitespace pdeclaration whitespace)
+    (pchar '{')
+    >>. whitespace // This parses out the whitespace in case the fn is empty (no declarations)
+    >>. many (between whitespace pdeclaration whitespace)
     .>> (pchar '}')
 
 let pstatement: Parser<Statement> =
