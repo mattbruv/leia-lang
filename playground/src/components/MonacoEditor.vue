@@ -21,7 +21,7 @@ onMounted(() => {
 
   editor = monaco.editor.create(container.value, {
     value: props.code,
-    language: 'javascript',
+    language: 'leia',
     theme: 'vs-dark',
   })
 
