@@ -5,6 +5,7 @@ open Grammar
 open Microsoft.FSharp.Collections
 open Opcodes
 open Parser
+open Organize
 
 type ConstTable = IDictionary<int, Literal>
 type LocalMap = Map<string, int>
@@ -171,46 +172,71 @@ let rec compileExpression e (env: CompilerEnv) : Emitted list * CompilerEnv =
 
 let rec compileDeclaration (declaration: Declaration) env : Emitted list * CompilerEnv =
     match declaration with
-    | FunctionDeclaration fn ->
-        // Add function label
-        let label = FunctionLabel(fnLabel fn.name)
-
-        let paramNames =
-            match fn.parameters with
-            | Some ps -> List.map Ident.value ps
-            | None -> []
-
-        let paramLocals = paramNames |> List.mapi (fun idx name -> name, idx) |> Map.ofList
-
-        let envWithParams =
-            { env with
-                locals = paramLocals
-                nextSlot = List.length paramNames }
-
-        // pop all arguments off the stack and store them into their respective locals
-        let storeParams: Emitted list =
-            paramLocals //
-            |> Map.toList
-            |> List.sortBy snd // store in argument order which was pushed onto the stack
-            |> List.map (fun (k, v) -> emitWithComment (StoreLocal v, Some $"push {k}"))
-
-        // Add compiled body
-        let body, env2 =
-            fn.body
-            |> List.fold
-                (fun (acc, currentEnv) stmt ->
-                    let emitted, newEnv = compileDeclaration stmt currentEnv
-                    (acc @ emitted, newEnv))
-                ([], envWithParams)
-
-        // If we are in the main function, we don't want to return, but rather halt
-        let returnOp =
-            match Ident.value fn.name with
-            | "main" -> [ emit Halt ]
-            | _ -> [ emit Return ]
-
-        [ label ] @ storeParams @ body @ returnOp, env2
+    | FunctionDeclaration fn -> compileFunction fn env
     | Statement statement -> compileStatement statement env
+
+and compileFunction (fn: Function) env : Emitted list * CompilerEnv =
+    // Add function label
+    let label = FunctionLabel(fnLabel fn.name)
+
+    let paramNames =
+        match fn.parameters with
+        | Some ps -> List.map Ident.value ps
+        | None -> []
+
+    let paramLocals = paramNames |> List.mapi (fun idx name -> name, idx) |> Map.ofList
+
+    let envWithParams =
+        { env with
+            locals = paramLocals
+            nextSlot = List.length paramNames }
+
+    // pop all arguments off the stack and store them into their respective locals
+    let storeParams: Emitted list =
+        paramLocals //
+        |> Map.toList
+        |> List.sortBy snd // store in argument order which was pushed onto the stack
+        |> List.map (fun (k, v) -> emitWithComment (StoreLocal v, Some $"push {k}"))
+
+    // fn declarations should not be nested
+    let decl_fns =
+        fn.body
+        |> List.choose (function
+            | FunctionDeclaration f -> Some f
+            | _ -> None)
+
+    let decl_others =
+        fn.body
+        |> List.choose (function
+            | FunctionDeclaration _ -> None
+            | x -> Some x)
+
+    // Add compiled body (non function declarations)
+    let body, env2 =
+        decl_others
+        |> List.fold
+            (fun (acc, currentEnv) stmt ->
+                let emitted, newEnv = compileDeclaration stmt currentEnv
+                (acc @ emitted, newEnv))
+            ([], envWithParams)
+
+    // Add compiled nested function declarations.
+    let nested_functions, env3 =
+        decl_fns
+        |> List.fold
+            (fun (acc, currentEnv) stmt ->
+                let emitted, newEnv = compileFunction stmt currentEnv
+                (acc @ emitted, newEnv))
+            ([], env2)
+
+
+    // If we are in the main function, we don't want to return, but rather halt
+    let returnOp =
+        match Ident.value fn.name with
+        | "main" -> [ emit Halt ]
+        | _ -> [ emit Return ]
+
+    [ label ] @ storeParams @ body @ returnOp @ nested_functions, env3
 
 and compileStatement (statement: Statement) env : Emitted list * CompilerEnv =
     match statement with
@@ -324,51 +350,6 @@ let emittedToString emitted =
         match stringOption with
         | Some value -> prefix + op + " ; " + value
         | None -> prefix + op
-
-let organize (program: Declaration list) =
-    // Check for main function at top level.
-    // If one doesn't exist, bundle all top level statements into it.
-
-    let maybeMain =
-        program
-        |> List.tryPick (function
-            | FunctionDeclaration fn when (Ident.value fn.name = "main") -> Some(fn)
-            | _ -> None)
-
-    let topLevelDeclarations =
-        program
-        |> List.choose (function
-            | FunctionDeclaration fn when Ident.value fn.name <> "main" -> Some(FunctionDeclaration fn)
-            | _ -> None)
-
-    let topLevelStatements =
-        program
-        |> List.choose (function
-            | Statement s -> Some s
-            | _ -> None)
-
-    let output: Declaration list =
-        match maybeMain with
-        | Some main ->
-            // If we have defined a main function but still have top level statements, throw an error
-            if List.length topLevelStatements > 0 then
-                failwith "main() is explicitly defined but there are top level statements outside of main."
-
-            topLevelDeclarations @ [ FunctionDeclaration main ]
-        | None ->
-            // If the user didn't define main, let's create our own.
-            let stmts = topLevelStatements |> List.map Statement
-
-            let main =
-                FunctionDeclaration
-                    { name = Ident "main"
-                      parameters = None
-                      body = stmts }
-
-            topLevelDeclarations @ [ main ]
-
-    output
-
 
 let compile (program: Declaration list) : string =
     // printf "%A\n" program

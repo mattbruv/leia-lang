@@ -9,6 +9,7 @@
         <Compile Include="Grammar.fs"/>
         <Compile Include="Opcodes.fs"/>
         <Compile Include="Parser.fs"/>
+        <Compile Include="Organize.fs"/>
         <Compile Include="Compiler.fs"/>
     </ItemGroup>
 
