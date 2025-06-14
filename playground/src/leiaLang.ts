@@ -1,5 +1,24 @@
 import * as monaco from "monaco-editor";
 
+import fact from "../../tests/src/recurse_fact.leia?raw";
+import fib from "../../tests/src/recurse_fib.leia?raw";
+import euler1 from "../../tests/src/recurse_euler_1.leia?raw";
+
+export const LEIA_EXAMPLES: { name: string; source: string }[] = [
+  {
+    name: "Fibonacci Sequence",
+    source: fib,
+  },
+  {
+    name: "12th Factorial",
+    source: fact,
+  },
+  {
+    name: "Project Euler #1",
+    source: euler1,
+  },
+];
+
 export const LeiaLang: monaco.languages.IMonarchLanguage = {
   // Difficulty: "Easy"
   // Language definition for Java

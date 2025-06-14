@@ -1,4 +1,7 @@
 <template>
+  <div>
+    <Dropdown @change="onProgramChange" v-model:model-value="selection" option-label="name" :options="LEIA_EXAMPLES" />
+  </div>
   <div class="playground">
     <Panel header="Editor" class="section">
       <MonacoEditor :code="sourceCode" @update:code="onCodeUpdate" />
@@ -18,13 +21,31 @@
 <script lang="ts" setup>
 //@ts-ignore
 import { compileWeb } from "../../Compiler/CompilerLib/Compiler.fs.js"
-import { ref } from 'vue'
+import Dropdown from "primevue/dropdown";
+import { onMounted, ref } from 'vue'
 import MonacoEditor from "./components/MonacoEditor.vue"
 import { run_asm } from "vm";
+import { LEIA_EXAMPLES } from "./leiaLang.js";
+import type { SelectChangeEvent } from "primevue/select";
 
-const sourceCode = ref<string>('print("hello world")')
+const sourceCode = ref<string>(LEIA_EXAMPLES[0].source)
 const asmOutput = ref<string>('')
 const programOutput = ref<string>('')
+
+const selection = ref<{
+  name: string, source: string
+} | null>(LEIA_EXAMPLES[0])
+
+function onProgramChange(event: SelectChangeEvent) {
+  sourceCode.value = event.value.source
+  asmOutput.value = compileToAsm(sourceCode.value)
+  onRun()
+}
+
+onMounted(() => {
+  asmOutput.value = compileToAsm(sourceCode.value)
+  onRun()
+})
 
 function onCodeUpdate(newCode: string) {
   sourceCode.value = newCode
